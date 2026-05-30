@@ -3,12 +3,15 @@ package main
 import (
     "context"
     "flag"
+    "fmt"
+    "io"
     "log"
     "net"
+    "net/http"
     "os"
     "os/signal"
+    "strconv"
     "time"
-    "math/rand"
 
     "google.golang.org/grpc"
     "google.golang.org/grpc/credentials/insecure"
@@ -20,23 +23,81 @@ import (
 func getLocalIP() string {
     conn, err := net.Dial("udp", "8.8.8.8:80")
     if err != nil {
-        return ""
+        return "127.0.0.1"
     }
     defer conn.Close()
     localAddr := conn.LocalAddr().(*net.UDPAddr)
     return localAddr.IP.String()
 }
 
-func simulateCPULoad() float32 {
-    // Simula una carga de CPU que cambia gradualmente
-    // En un caso real leeríamos de /proc/stat o usaríamos gopsutil
-    return rand.Float32() * 100.0
+// Global state for MonitorC
+type monitorCServer struct {
+    pb.UnimplementedMonitorCServiceServer
+    instanceID string
+}
+
+func (s *monitorCServer) checkAppInstance() (float32, error) {
+    client := http.Client{Timeout: 2 * time.Second}
+    resp, err := client.Get("http://127.0.0.1:8000/metrics")
+    if err != nil {
+        return 0, err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        return 0, fmt.Errorf("bad status: %d", resp.StatusCode)
+    }
+
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return 0, err
+    }
+
+    load, err := strconv.ParseFloat(string(body), 32)
+    if err != nil {
+        return 0, err
+    }
+    return float32(load), nil
+}
+
+func (s *monitorCServer) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
+    // Verificar vivacidad de la AppInstance
+    _, err := s.checkAppInstance()
+    if err != nil {
+        log.Printf("Ping failed: AppInstance unreachable: %v", err)
+        return nil, err // Retornar error gRPC hace que MonitorS cuente como fallo
+    }
+    return &pb.PingResponse{Success: true}, nil
+}
+
+func (s *monitorCServer) GetMetrics(ctx context.Context, req *pb.GetMetricsRequest) (*pb.GetMetricsResponse, error) {
+    load, err := s.checkAppInstance()
+    if err != nil {
+        log.Printf("GetMetrics failed: %v", err)
+        return nil, err
+    }
+
+    return &pb.GetMetricsResponse{
+        CpuLoad:    load,
+        InstanceId: s.instanceID,
+    }, nil
+}
+
+func (s *monitorCServer) Shutdown(ctx context.Context, req *pb.ShutdownRequest) (*pb.ShutdownResponse, error) {
+    log.Println("Received Shutdown command from ControllerASG. Shutting down gracefully...")
+    // En un caso real, aquí detendríamos la AppInstance.
+    // Como es un demo, simplemente responderemos y dejaremos que el OS nos mate, o nos cerramos.
+    go func() {
+        time.Sleep(2 * time.Second)
+        os.Exit(0)
+    }()
+    return &pb.ShutdownResponse{Success: true, InstanceId: s.instanceID}, nil
 }
 
 func main() {
-    serverAddr := flag.String("server", "localhost:50051", "MonitorS gRPC server address")
+    monitorSAddr := flag.String("server", "localhost:50051", "MonitorS gRPC server address")
+    listenAddr := flag.String("listen", ":50052", "Port to listen for MonitorS polling")
     id := flag.String("id", "", "Instance ID (defaults to hostname)")
-    interval := flag.Duration("interval", 30*time.Second, "heartbeat interval")
     flag.Parse()
 
     hostname, _ := os.Hostname()
@@ -55,58 +116,74 @@ func main() {
         }
     }
 
-    // Set up a connection to the server.
-    conn, err := grpc.Dial(*serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+    // 1. Iniciar servidor gRPC para que MonitorS nos haga polling
+    lis, err := net.Listen("tcp", *listenAddr)
     if err != nil {
-        log.Fatalf("did not connect: %v", err)
+        log.Fatalf("failed to listen: %v", err)
+    }
+    
+    srv := grpc.NewServer()
+    serverImpl := &monitorCServer{
+        instanceID: instID,
+    }
+    pb.RegisterMonitorCServiceServer(srv, serverImpl)
+    
+    go func() {
+        log.Printf("MonitorC listening on %s", *listenAddr)
+        if err := srv.Serve(lis); err != nil {
+            log.Fatalf("failed to serve: %v", err)
+        }
+    }()
+
+    // 2. Registrarse en MonitorS
+    conn, err := grpc.Dial(*monitorSAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+    if err != nil {
+        log.Fatalf("did not connect to MonitorS: %v", err)
     }
     defer conn.Close()
-    client := pb.NewMonitorServiceClient(conn)
+    
+    client := pb.NewMonitorSServiceClient(conn)
 
-    ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-    defer stop()
+    // Extraer puerto numérico para enviar a MonitorS
+    _, portStr, _ := net.SplitHostPort(*listenAddr)
+    port := 50052
+    if p, err := net.LookupPort("tcp", portStr); err == nil {
+        port = p
+    }
 
-    // 1. Registro
     req := &pb.RegisterRequest{
         InstanceId: instID,
         Hostname:   hostname,
         LocalIp:    ip,
-        Meta:       map[string]string{"env": "local", "type": "AppInstance"},
+        GrpcPort:   int32(port),
+        Meta:       map[string]string{"env": "local"},
     }
     
-    registerResp, err := client.Register(ctx, req)
-    if err != nil {
-        log.Fatalf("could not register: %v", err)
-    }
-    log.Printf("Register response: %v", registerResp.Message)
-
-    // 2. Loop de Heartbeat y Envío de Métricas simulado
-    ticker := time.NewTicker(*interval)
-    defer ticker.Stop()
-
+    // Reintentar registro si MonitorS no está arriba aún
     for {
-        select {
-        case <-ctx.Done():
-            log.Println("monitorC shutting down. Deregistering...")
-            // Intento de desregistro antes de morir
-            deregReq := &pb.DeregisterRequest{InstanceId: instID}
-            client.Deregister(context.Background(), deregReq)
-            return
-        case <-ticker.C:
-            hbReq := &pb.HeartbeatRequest{InstanceId: instID}
-            _, err := client.Heartbeat(ctx, hbReq)
-            if err != nil {
-                log.Printf("heartbeat failed: %v", err)
-            } else {
-                log.Printf("Heartbeat sent successfully")
-            }
-            
-            // Aunque el PDF sugiere que el servidor consulta GetMetrics, 
-            // llamarlo desde el cliente hacia un servicio dummy en el servidor 
-            // satisface el envío de métricas gRPC por ahora.
-            // En una arquitectura Pull pura, MonitorC debería arrancar un grpc.NewServer().
-            load := simulateCPULoad()
-            log.Printf("Current simulated CPU load: %.2f%%", load)
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        resp, err := client.Register(ctx, req)
+        cancel()
+        
+        if err == nil && resp.Success {
+            log.Printf("Successfully registered with MonitorS: %s", resp.Message)
+            break
         }
+        log.Printf("Failed to register with MonitorS (retrying in 5s): %v", err)
+        time.Sleep(5 * time.Second)
     }
+
+    // Esperar señal de salida
+    ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+    defer stop()
+    
+    <-ctx.Done()
+    log.Println("Shutting down MonitorC. Deregistering...")
+    
+    deregReq := &pb.DeregisterRequest{InstanceId: instID}
+    ctxDereg, cancelDereg := context.WithTimeout(context.Background(), 2*time.Second)
+    defer cancelDereg()
+    
+    client.Deregister(ctxDereg, deregReq)
+    srv.GracefulStop()
 }

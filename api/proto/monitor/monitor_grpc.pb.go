@@ -19,225 +19,333 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MonitorService_Register_FullMethodName   = "/monitor.MonitorService/Register"
-	MonitorService_Deregister_FullMethodName = "/monitor.MonitorService/Deregister"
-	MonitorService_Heartbeat_FullMethodName  = "/monitor.MonitorService/Heartbeat"
-	MonitorService_GetMetrics_FullMethodName = "/monitor.MonitorService/GetMetrics"
+	MonitorSService_Register_FullMethodName   = "/monitor.MonitorSService/Register"
+	MonitorSService_Deregister_FullMethodName = "/monitor.MonitorSService/Deregister"
 )
 
-// MonitorServiceClient is the client API for MonitorService service.
+// MonitorSServiceClient is the client API for MonitorSService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// El servicio MonitorS expone los métodos que el agente MonitorC puede llamar.
-type MonitorServiceClient interface {
+// Servicios expuestos por el Servidor Central (MonitorS)
+type MonitorSServiceClient interface {
 	// HU-01: Registro y Desregistro
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Deregister(ctx context.Context, in *DeregisterRequest, opts ...grpc.CallOption) (*DeregisterResponse, error)
-	// HU-02: Verificación de vivacidad (Heartbeat)
-	Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatResponse, error)
-	// GetMetrics: Obtener métricas de carga simulada del MonitorC
-	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error)
 }
 
-type monitorServiceClient struct {
+type monitorSServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewMonitorServiceClient(cc grpc.ClientConnInterface) MonitorServiceClient {
-	return &monitorServiceClient{cc}
+func NewMonitorSServiceClient(cc grpc.ClientConnInterface) MonitorSServiceClient {
+	return &monitorSServiceClient{cc}
 }
 
-func (c *monitorServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
+func (c *monitorSServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RegisterResponse)
-	err := c.cc.Invoke(ctx, MonitorService_Register_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MonitorSService_Register_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *monitorServiceClient) Deregister(ctx context.Context, in *DeregisterRequest, opts ...grpc.CallOption) (*DeregisterResponse, error) {
+func (c *monitorSServiceClient) Deregister(ctx context.Context, in *DeregisterRequest, opts ...grpc.CallOption) (*DeregisterResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeregisterResponse)
-	err := c.cc.Invoke(ctx, MonitorService_Deregister_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MonitorSService_Deregister_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *monitorServiceClient) Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(HeartbeatResponse)
-	err := c.cc.Invoke(ctx, MonitorService_Heartbeat_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *monitorServiceClient) GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetMetricsResponse)
-	err := c.cc.Invoke(ctx, MonitorService_GetMetrics_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// MonitorServiceServer is the server API for MonitorService service.
-// All implementations must embed UnimplementedMonitorServiceServer
+// MonitorSServiceServer is the server API for MonitorSService service.
+// All implementations must embed UnimplementedMonitorSServiceServer
 // for forward compatibility.
 //
-// El servicio MonitorS expone los métodos que el agente MonitorC puede llamar.
-type MonitorServiceServer interface {
+// Servicios expuestos por el Servidor Central (MonitorS)
+type MonitorSServiceServer interface {
 	// HU-01: Registro y Desregistro
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Deregister(context.Context, *DeregisterRequest) (*DeregisterResponse, error)
-	// HU-02: Verificación de vivacidad (Heartbeat)
-	Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error)
-	// GetMetrics: Obtener métricas de carga simulada del MonitorC
-	GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error)
-	mustEmbedUnimplementedMonitorServiceServer()
+	mustEmbedUnimplementedMonitorSServiceServer()
 }
 
-// UnimplementedMonitorServiceServer must be embedded to have
+// UnimplementedMonitorSServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedMonitorServiceServer struct{}
+type UnimplementedMonitorSServiceServer struct{}
 
-func (UnimplementedMonitorServiceServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
+func (UnimplementedMonitorSServiceServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedMonitorServiceServer) Deregister(context.Context, *DeregisterRequest) (*DeregisterResponse, error) {
+func (UnimplementedMonitorSServiceServer) Deregister(context.Context, *DeregisterRequest) (*DeregisterResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Deregister not implemented")
 }
-func (UnimplementedMonitorServiceServer) Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method Heartbeat not implemented")
-}
-func (UnimplementedMonitorServiceServer) GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetMetrics not implemented")
-}
-func (UnimplementedMonitorServiceServer) mustEmbedUnimplementedMonitorServiceServer() {}
-func (UnimplementedMonitorServiceServer) testEmbeddedByValue()                        {}
+func (UnimplementedMonitorSServiceServer) mustEmbedUnimplementedMonitorSServiceServer() {}
+func (UnimplementedMonitorSServiceServer) testEmbeddedByValue()                         {}
 
-// UnsafeMonitorServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to MonitorServiceServer will
+// UnsafeMonitorSServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MonitorSServiceServer will
 // result in compilation errors.
-type UnsafeMonitorServiceServer interface {
-	mustEmbedUnimplementedMonitorServiceServer()
+type UnsafeMonitorSServiceServer interface {
+	mustEmbedUnimplementedMonitorSServiceServer()
 }
 
-func RegisterMonitorServiceServer(s grpc.ServiceRegistrar, srv MonitorServiceServer) {
-	// If the following call panics, it indicates UnimplementedMonitorServiceServer was
+func RegisterMonitorSServiceServer(s grpc.ServiceRegistrar, srv MonitorSServiceServer) {
+	// If the following call panics, it indicates UnimplementedMonitorSServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&MonitorService_ServiceDesc, srv)
+	s.RegisterService(&MonitorSService_ServiceDesc, srv)
 }
 
-func _MonitorService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MonitorSService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RegisterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MonitorServiceServer).Register(ctx, in)
+		return srv.(MonitorSServiceServer).Register(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MonitorService_Register_FullMethodName,
+		FullMethod: MonitorSService_Register_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MonitorServiceServer).Register(ctx, req.(*RegisterRequest))
+		return srv.(MonitorSServiceServer).Register(ctx, req.(*RegisterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MonitorService_Deregister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MonitorSService_Deregister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeregisterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MonitorServiceServer).Deregister(ctx, in)
+		return srv.(MonitorSServiceServer).Deregister(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MonitorService_Deregister_FullMethodName,
+		FullMethod: MonitorSService_Deregister_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MonitorServiceServer).Deregister(ctx, req.(*DeregisterRequest))
+		return srv.(MonitorSServiceServer).Deregister(ctx, req.(*DeregisterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MonitorService_Heartbeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HeartbeatRequest)
+// MonitorSService_ServiceDesc is the grpc.ServiceDesc for MonitorSService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var MonitorSService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "monitor.MonitorSService",
+	HandlerType: (*MonitorSServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Register",
+			Handler:    _MonitorSService_Register_Handler,
+		},
+		{
+			MethodName: "Deregister",
+			Handler:    _MonitorSService_Deregister_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/proto/monitor/monitor.proto",
+}
+
+const (
+	MonitorCService_Ping_FullMethodName       = "/monitor.MonitorCService/Ping"
+	MonitorCService_GetMetrics_FullMethodName = "/monitor.MonitorCService/GetMetrics"
+	MonitorCService_Shutdown_FullMethodName   = "/monitor.MonitorCService/Shutdown"
+)
+
+// MonitorCServiceClient is the client API for MonitorCService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Servicios expuestos por los Agentes (MonitorC)
+type MonitorCServiceClient interface {
+	// HU-02: Verificación de vivacidad (Ping)
+	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
+	// GetMetrics: Obtener métricas de carga simulada del MonitorC
+	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error)
+	// Shutdown: Para apagado ordenado antes de que el ASG destruya la instancia
+	Shutdown(ctx context.Context, in *ShutdownRequest, opts ...grpc.CallOption) (*ShutdownResponse, error)
+}
+
+type monitorCServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewMonitorCServiceClient(cc grpc.ClientConnInterface) MonitorCServiceClient {
+	return &monitorCServiceClient{cc}
+}
+
+func (c *monitorCServiceClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PingResponse)
+	err := c.cc.Invoke(ctx, MonitorCService_Ping_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *monitorCServiceClient) GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetMetricsResponse)
+	err := c.cc.Invoke(ctx, MonitorCService_GetMetrics_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *monitorCServiceClient) Shutdown(ctx context.Context, in *ShutdownRequest, opts ...grpc.CallOption) (*ShutdownResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ShutdownResponse)
+	err := c.cc.Invoke(ctx, MonitorCService_Shutdown_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MonitorCServiceServer is the server API for MonitorCService service.
+// All implementations must embed UnimplementedMonitorCServiceServer
+// for forward compatibility.
+//
+// Servicios expuestos por los Agentes (MonitorC)
+type MonitorCServiceServer interface {
+	// HU-02: Verificación de vivacidad (Ping)
+	Ping(context.Context, *PingRequest) (*PingResponse, error)
+	// GetMetrics: Obtener métricas de carga simulada del MonitorC
+	GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error)
+	// Shutdown: Para apagado ordenado antes de que el ASG destruya la instancia
+	Shutdown(context.Context, *ShutdownRequest) (*ShutdownResponse, error)
+	mustEmbedUnimplementedMonitorCServiceServer()
+}
+
+// UnimplementedMonitorCServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedMonitorCServiceServer struct{}
+
+func (UnimplementedMonitorCServiceServer) Ping(context.Context, *PingRequest) (*PingResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Ping not implemented")
+}
+func (UnimplementedMonitorCServiceServer) GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetMetrics not implemented")
+}
+func (UnimplementedMonitorCServiceServer) Shutdown(context.Context, *ShutdownRequest) (*ShutdownResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Shutdown not implemented")
+}
+func (UnimplementedMonitorCServiceServer) mustEmbedUnimplementedMonitorCServiceServer() {}
+func (UnimplementedMonitorCServiceServer) testEmbeddedByValue()                         {}
+
+// UnsafeMonitorCServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MonitorCServiceServer will
+// result in compilation errors.
+type UnsafeMonitorCServiceServer interface {
+	mustEmbedUnimplementedMonitorCServiceServer()
+}
+
+func RegisterMonitorCServiceServer(s grpc.ServiceRegistrar, srv MonitorCServiceServer) {
+	// If the following call panics, it indicates UnimplementedMonitorCServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&MonitorCService_ServiceDesc, srv)
+}
+
+func _MonitorCService_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PingRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MonitorServiceServer).Heartbeat(ctx, in)
+		return srv.(MonitorCServiceServer).Ping(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MonitorService_Heartbeat_FullMethodName,
+		FullMethod: MonitorCService_Ping_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MonitorServiceServer).Heartbeat(ctx, req.(*HeartbeatRequest))
+		return srv.(MonitorCServiceServer).Ping(ctx, req.(*PingRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MonitorService_GetMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MonitorCService_GetMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetMetricsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MonitorServiceServer).GetMetrics(ctx, in)
+		return srv.(MonitorCServiceServer).GetMetrics(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MonitorService_GetMetrics_FullMethodName,
+		FullMethod: MonitorCService_GetMetrics_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MonitorServiceServer).GetMetrics(ctx, req.(*GetMetricsRequest))
+		return srv.(MonitorCServiceServer).GetMetrics(ctx, req.(*GetMetricsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// MonitorService_ServiceDesc is the grpc.ServiceDesc for MonitorService service.
+func _MonitorCService_Shutdown_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShutdownRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MonitorCServiceServer).Shutdown(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MonitorCService_Shutdown_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MonitorCServiceServer).Shutdown(ctx, req.(*ShutdownRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// MonitorCService_ServiceDesc is the grpc.ServiceDesc for MonitorCService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var MonitorService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "monitor.MonitorService",
-	HandlerType: (*MonitorServiceServer)(nil),
+var MonitorCService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "monitor.MonitorCService",
+	HandlerType: (*MonitorCServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Register",
-			Handler:    _MonitorService_Register_Handler,
-		},
-		{
-			MethodName: "Deregister",
-			Handler:    _MonitorService_Deregister_Handler,
-		},
-		{
-			MethodName: "Heartbeat",
-			Handler:    _MonitorService_Heartbeat_Handler,
+			MethodName: "Ping",
+			Handler:    _MonitorCService_Ping_Handler,
 		},
 		{
 			MethodName: "GetMetrics",
-			Handler:    _MonitorService_GetMetrics_Handler,
+			Handler:    _MonitorCService_GetMetrics_Handler,
+		},
+		{
+			MethodName: "Shutdown",
+			Handler:    _MonitorCService_Shutdown_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -4,24 +4,31 @@ package monitor;
 
 option go_package = "github.com/marendonq/distributed-ec2-autoscaler/api/proto/monitor";
 
-// El servicio MonitorS expone los métodos que el agente MonitorC puede llamar.
-service MonitorService {
+// Servicios expuestos por el Servidor Central (MonitorS)
+service MonitorSService {
   // HU-01: Registro y Desregistro
   rpc Register (RegisterRequest) returns (RegisterResponse) {}
   rpc Deregister (DeregisterRequest) returns (DeregisterResponse) {}
-  
-  // HU-02: Verificación de vivacidad (Heartbeat)
-  rpc Heartbeat (HeartbeatRequest) returns (HeartbeatResponse) {}
+}
+
+// Servicios expuestos por los Agentes (MonitorC)
+service MonitorCService {
+  // HU-02: Verificación de vivacidad (Ping)
+  rpc Ping (PingRequest) returns (PingResponse) {}
   
   // GetMetrics: Obtener métricas de carga simulada del MonitorC
   rpc GetMetrics (GetMetricsRequest) returns (GetMetricsResponse) {}
+  
+  // Shutdown: Para apagado ordenado antes de que el ASG destruya la instancia
+  rpc Shutdown (ShutdownRequest) returns (ShutdownResponse) {}
 }
 
 message RegisterRequest {
   string instance_id = 1;
   string hostname = 2;
   string local_ip = 3;
-  map<string, string> meta = 4;
+  int32 grpc_port = 4;
+  map<string, string> meta = 5;
 }
 
 message RegisterResponse {
@@ -37,18 +44,25 @@ message DeregisterResponse {
   bool success = 1;
 }
 
-message HeartbeatRequest {
-  string instance_id = 1;
+message PingRequest {
 }
 
-message HeartbeatResponse {
+message PingResponse {
   bool success = 1;
 }
 
 message GetMetricsRequest {
-  string instance_id = 1;
 }
 
 message GetMetricsResponse {
-  float cpu_load = 1; // Carga simulada entre 0 y 100%
+  float cpu_load = 1; // Carga simulada (onda sinusoidal)
+  string instance_id = 2; // Para validación defensiva
+}
+
+message ShutdownRequest {
+}
+
+message ShutdownResponse {
+  bool success = 1;
+  string instance_id = 2;
 }

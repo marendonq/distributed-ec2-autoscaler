@@ -2,58 +2,55 @@ package monitor
 
 import (
     "context"
+    "fmt"
     "log"
     "net"
+    "strconv"
+    "sync"
     "time"
+
+    "google.golang.org/grpc"
+    "google.golang.org/grpc/credentials/insecure"
 
     "github.com/marendonq/distributed-ec2-autoscaler/config"
     "github.com/marendonq/distributed-ec2-autoscaler/internal/domain"
     "github.com/marendonq/distributed-ec2-autoscaler/internal/service"
     pb "github.com/marendonq/distributed-ec2-autoscaler/api/proto/monitor"
-    "google.golang.org/grpc"
 )
 
-type grpcServer struct {
-    pb.UnimplementedMonitorServiceServer
+type monitorSServer struct {
+    pb.UnimplementedMonitorSServiceServer
     svc *service.MonitorService
 }
 
-func (s *grpcServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+func (s *monitorSServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+    if req.Meta == nil {
+        req.Meta = make(map[string]string)
+    }
+    req.Meta["grpc_port"] = fmt.Sprintf("%d", req.GrpcPort)
+    req.Meta["failures"] = "0"
+    
     inst := &domain.Instance{
         ID:       req.InstanceId,
         Hostname: req.Hostname,
         IP:       req.LocalIp,
         Meta:     req.Meta,
     }
+    
+    // Register sets LastSeen automatically
     if err := s.svc.RegisterInstance(inst); err != nil {
         return &pb.RegisterResponse{Success: false, Message: err.Error()}, nil
     }
-    log.Printf("gRPC: Registered instance %s", inst.ID)
+    log.Printf("MonitorS: Registered instance %s (IP: %s, Port: %d)", inst.ID, req.LocalIp, req.GrpcPort)
     return &pb.RegisterResponse{Success: true, Message: "Registered successfully"}, nil
 }
 
-func (s *grpcServer) Deregister(ctx context.Context, req *pb.DeregisterRequest) (*pb.DeregisterResponse, error) {
+func (s *monitorSServer) Deregister(ctx context.Context, req *pb.DeregisterRequest) (*pb.DeregisterResponse, error) {
     if err := s.svc.Deregister(req.InstanceId); err != nil {
         return &pb.DeregisterResponse{Success: false}, nil
     }
-    log.Printf("gRPC: Deregistered instance %s", req.InstanceId)
+    log.Printf("MonitorS: Deregistered instance %s", req.InstanceId)
     return &pb.DeregisterResponse{Success: true}, nil
-}
-
-func (s *grpcServer) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest) (*pb.HeartbeatResponse, error) {
-    if err := s.svc.Heartbeat(req.InstanceId); err != nil {
-        return &pb.HeartbeatResponse{Success: false}, nil
-    }
-    // log.Printf("gRPC: Heartbeat from %s", req.InstanceId)
-    return &pb.HeartbeatResponse{Success: true}, nil
-}
-
-func (s *grpcServer) GetMetrics(ctx context.Context, req *pb.GetMetricsRequest) (*pb.GetMetricsResponse, error) {
-    // Para simplificar, el servidor no llama activamente al cliente. En un modelo push, 
-    // el cliente enviaría las métricas. Aquí simplemente devolvemos un valor dummy, 
-    // pero idealmente este método debería ser llamado por ControllerASG y enviaría la petición al cliente,
-    // o el cliente reportaría sus métricas en el Heartbeat. 
-    return &pb.GetMetricsResponse{CpuLoad: 50.0}, nil
 }
 
 // StartGRPCServer starts a gRPC server listening on addr. It returns when Serve exits.
@@ -63,26 +60,29 @@ func StartGRPCServer(ctx context.Context, addr string, svc *service.MonitorServi
         return err
     }
     srv := grpc.NewServer()
-    pb.RegisterMonitorServiceServer(srv, &grpcServer{svc: svc})
+    pb.RegisterMonitorSServiceServer(srv, &monitorSServer{svc: svc})
     
     go func() {
         <-ctx.Done()
-        log.Println("shutting down gRPC server")
+        log.Println("shutting down MonitorS gRPC server")
         srv.GracefulStop()
     }()
-    log.Printf("gRPC server listening on %s", addr)
+    log.Printf("MonitorS gRPC server listening on %s", addr)
     return srv.Serve(lis)
 }
 
-// StartSchedulers launches background periodic tasks (heartbeats, cleanup, etc.).
-// It uses the provided service to list instances and mark them inactive when
-// they haven't been seen recently.
-func StartSchedulers(ctx context.Context, cfg *config.Config, svc interface{ ListInstances() ([]*domain.Instance, error); MarkInactive(string) error }) {
+// StartSchedulers launches background periodic tasks to poll MonitorC agents.
+func StartSchedulers(ctx context.Context, cfg *config.Config, svc interface{ 
+    ListInstances() ([]*domain.Instance, error)
+    RegisterInstance(*domain.Instance) error
+    MarkInactive(string) error 
+}) {
     interval := time.Duration(cfg.HeartbeatCheckIntervalSeconds) * time.Second
     if interval <= 0 {
-        interval = 30 * time.Second
+        interval = 10 * time.Second // Word doc suggests 10s
     }
     ticker := time.NewTicker(interval)
+    
     go func() {
         defer ticker.Stop()
         for {
@@ -96,20 +96,71 @@ func StartSchedulers(ctx context.Context, cfg *config.Config, svc interface{ Lis
                     log.Printf("scheduler: failed to list instances: %v", err)
                     continue
                 }
-                now := time.Now().Unix()
-                timeout := int64(cfg.HeartbeatTimeoutSeconds)
+                
+                var wg sync.WaitGroup
                 for _, inst := range instances {
-                    if now-inst.LastSeen > timeout {
-                        if inst.Status == domain.StatusActive {
-                            log.Printf("scheduler: marking %s inactive (last seen %d)", inst.ID, inst.LastSeen)
-                            if err := svc.MarkInactive(inst.ID); err != nil {
-                                log.Printf("scheduler: failed to mark inactive %s: %v", inst.ID, err)
-                            }
-                        }
+                    if inst.Status != domain.StatusActive {
+                        continue
                     }
+                    wg.Add(1)
+                    go func(instance *domain.Instance) {
+                        defer wg.Done()
+                        pollInstance(instance, svc)
+                    }(inst)
                 }
-                // log.Printf("scheduler tick: checked %d instances", len(instances))
+                wg.Wait()
             }
         }
     }()
+}
+
+func pollInstance(inst *domain.Instance, svc interface{ RegisterInstance(*domain.Instance) error; MarkInactive(string) error }) {
+    port := inst.Meta["grpc_port"]
+    if port == "" {
+        port = "50052" // default MonitorC port
+    }
+    target := fmt.Sprintf("%s:%s", inst.IP, port)
+    
+    // Configurar timeout corto para no bloquear (3s según Word doc)
+    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+    defer cancel()
+    
+    conn, err := grpc.DialContext(ctx, target, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+    
+    success := false
+    var load float32 = 0.0
+    
+    if err == nil {
+        client := pb.NewMonitorCServiceClient(conn)
+        // 1. Ping
+        _, errPing := client.Ping(ctx, &pb.PingRequest{})
+        // 2. GetMetrics
+        if errPing == nil {
+            resp, errMet := client.GetMetrics(ctx, &pb.GetMetricsRequest{})
+            if errMet == nil {
+                success = true
+                load = resp.CpuLoad
+            }
+        }
+        conn.Close()
+    }
+
+    // Manejo de fallos o éxitos
+    failures, _ := strconv.Atoi(inst.Meta["failures"])
+    
+    if success {
+        inst.LastSeen = time.Now().Unix()
+        inst.Meta["failures"] = "0"
+        inst.Meta["cpu_load"] = fmt.Sprintf("%.2f", load)
+        svc.RegisterInstance(inst) // Actualizar datos
+    } else {
+        failures++
+        inst.Meta["failures"] = fmt.Sprintf("%d", failures)
+        if failures >= 3 {
+            log.Printf("scheduler: marking %s inactive after 3 consecutive failures", inst.ID)
+            svc.MarkInactive(inst.ID)
+        } else {
+            svc.RegisterInstance(inst) // Actualizar conteo de fallos
+        }
+    }
 }
