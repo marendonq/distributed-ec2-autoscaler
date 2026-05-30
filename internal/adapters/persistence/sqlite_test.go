@@ -8,39 +8,29 @@ import (
     "github.com/marendonq/distributed-ec2-autoscaler/internal/domain"
 )
 
-// TestPostgresRegisterSetsLastSeen verifies that Register() will set LastSeen
-// to a non-zero value and set Status to active when called with zero values.
-func TestPostgresRegisterSetsLastSeen(t *testing.T) {
-    dsn := os.Getenv("POSTGRES_DSN_TEST")
-    if dsn == "" {
-        dsn = os.Getenv("POSTGRES_DSN")
-    }
-    if dsn == "" {
-        t.Skip("POSTGRES_DSN_TEST or POSTGRES_DSN not set; skipping integration test")
-    }
+func TestSQLiteRegisterSetsLastSeen(t *testing.T) {
+    dbPath := "teleproy2_test.db"
+    defer os.Remove(dbPath)
 
-    regIface, err := NewPostgresRegistry(dsn)
+    regIface, err := NewSQLiteRegistry(dbPath)
     if err != nil {
-        t.Fatalf("NewPostgresRegistry error: %v", err)
+        t.Fatalf("NewSQLiteRegistry error: %v", err)
     }
 
-    // we expect the concrete type to be available in this package
-    pr, ok := regIface.(*PostgresRegistry)
+    sr, ok := regIface.(*SQLiteRegistry)
     if !ok {
         t.Fatalf("unexpected registry type")
     }
+    defer sr.db.Close()
 
     id := "test-inst-" + time.Now().Format("20060102150405")
     inst := &domain.Instance{ID: id, Hostname: "test-host", IP: "127.0.0.1"}
 
-    // ensure cleanup
-    defer pr.db.Exec("DELETE FROM instances WHERE id=$1", id)
-
-    if err := pr.Register(inst); err != nil {
+    if err := sr.Register(inst); err != nil {
         t.Fatalf("Register error: %v", err)
     }
 
-    got, err := pr.GetByID(id)
+    got, err := sr.GetByID(id)
     if err != nil {
         t.Fatalf("GetByID error: %v", err)
     }
@@ -54,10 +44,10 @@ func TestPostgresRegisterSetsLastSeen(t *testing.T) {
     // call Register again to simulate heartbeat and ensure LastSeen is updated
     prev := got.LastSeen
     time.Sleep(1 * time.Second)
-    if err := pr.Register(&domain.Instance{ID: id}); err != nil {
+    if err := sr.Register(&domain.Instance{ID: id}); err != nil {
         t.Fatalf("second Register error: %v", err)
     }
-    got2, err := pr.GetByID(id)
+    got2, err := sr.GetByID(id)
     if err != nil {
         t.Fatalf("GetByID after second register error: %v", err)
     }

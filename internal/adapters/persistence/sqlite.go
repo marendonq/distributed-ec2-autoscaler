@@ -7,7 +7,7 @@ import (
     "fmt"
     "time"
 
-    _ "github.com/mattn/go-sqlite3"
+    _ "modernc.org/sqlite"
 
     "github.com/marendonq/distributed-ec2-autoscaler/internal/domain"
     "github.com/marendonq/distributed-ec2-autoscaler/internal/ports"
@@ -20,7 +20,7 @@ type SQLiteRegistry struct {
 // NewSQLiteRegistry opens a sqlite connection with provided DSN (e.g.
 // file:teleproy2.db?cache=shared&mode=rwc) and ensures the instances table exists.
 func NewSQLiteRegistry(dsn string) (ports.InstanceRegistry, error) {
-    db, err := sql.Open("sqlite3", dsn)
+    db, err := sql.Open("sqlite", dsn)
     if err != nil {
         return nil, err
     }

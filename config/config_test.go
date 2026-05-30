@@ -17,11 +17,14 @@ func TestSaveLoadConfig(t *testing.T) {
     cfg := &Config{
         MinInstances: 2,
         MaxInstances: 4,
+        Region:       "us-east-1",
+        MonitorSIP:   "10.0.0.1",
         EC2Params: EC2Params{
-            AMI:          "ami-test",
-            InstanceType: "t2.small",
-            KeyName:      "key",
+            AMI:            "ami-test",
+            InstanceType:   "t2.small",
+            KeyName:        "key",
             SecurityGroups: []string{"sg-1"},
+            SubnetID:       "subnet-test",
         },
         Policies: []ScalingPolicy{
             {Name: "scale-up", Type: "cpu", Threshold: 80},
