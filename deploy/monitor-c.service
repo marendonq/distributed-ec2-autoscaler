@@ -1,0 +1,14 @@
+[Unit]
+Description=MonitorC gRPC Agent
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+ExecStart=/bin/bash -c '/usr/local/bin/monitor_c --server http://$MONITOR_S_IP:50052'
+EnvironmentFile=/etc/monitor_c.env
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
