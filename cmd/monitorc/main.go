@@ -3,14 +3,10 @@ package main
 import (
     "context"
     "flag"
-    "fmt"
-    "io"
     "log"
     "net"
-    "net/http"
     "os"
     "os/signal"
-    "strconv"
     "time"
 
     "google.golang.org/grpc"
@@ -36,62 +32,9 @@ type monitorCServer struct {
     instanceID string
 }
 
-func (s *monitorCServer) checkAppInstance() (float32, error) {
-    client := http.Client{Timeout: 2 * time.Second}
-    resp, err := client.Get("http://127.0.0.1:8000/metrics")
-    if err != nil {
-        return 0, err
-    }
-    defer resp.Body.Close()
-
-    if resp.StatusCode != http.StatusOK {
-        return 0, fmt.Errorf("bad status: %d", resp.StatusCode)
-    }
-
-    body, err := io.ReadAll(resp.Body)
-    if err != nil {
-        return 0, err
-    }
-
-    load, err := strconv.ParseFloat(string(body), 32)
-    if err != nil {
-        return 0, err
-    }
-    return float32(load), nil
-}
-
 func (s *monitorCServer) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
-    // Verificar vivacidad de la AppInstance
-    _, err := s.checkAppInstance()
-    if err != nil {
-        log.Printf("Ping failed: AppInstance unreachable: %v", err)
-        return nil, err // Retornar error gRPC hace que MonitorS cuente como fallo
-    }
+    // Ping sencillo para HU-02 (Vivacidad)
     return &pb.PingResponse{Success: true}, nil
-}
-
-func (s *monitorCServer) GetMetrics(ctx context.Context, req *pb.GetMetricsRequest) (*pb.GetMetricsResponse, error) {
-    load, err := s.checkAppInstance()
-    if err != nil {
-        log.Printf("GetMetrics failed: %v", err)
-        return nil, err
-    }
-
-    return &pb.GetMetricsResponse{
-        CpuLoad:    load,
-        InstanceId: s.instanceID,
-    }, nil
-}
-
-func (s *monitorCServer) Shutdown(ctx context.Context, req *pb.ShutdownRequest) (*pb.ShutdownResponse, error) {
-    log.Println("Received Shutdown command from ControllerASG. Shutting down gracefully...")
-    // En un caso real, aquí detendríamos la AppInstance.
-    // Como es un demo, simplemente responderemos y dejaremos que el OS nos mate, o nos cerramos.
-    go func() {
-        time.Sleep(2 * time.Second)
-        os.Exit(0)
-    }()
-    return &pb.ShutdownResponse{Success: true, InstanceId: s.instanceID}, nil
 }
 
 func main() {

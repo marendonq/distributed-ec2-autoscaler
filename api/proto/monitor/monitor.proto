@@ -15,12 +15,6 @@ service MonitorSService {
 service MonitorCService {
   // HU-02: Verificación de vivacidad (Ping)
   rpc Ping (PingRequest) returns (PingResponse) {}
-  
-  // GetMetrics: Obtener métricas de carga simulada del MonitorC
-  rpc GetMetrics (GetMetricsRequest) returns (GetMetricsResponse) {}
-  
-  // Shutdown: Para apagado ordenado antes de que el ASG destruya la instancia
-  rpc Shutdown (ShutdownRequest) returns (ShutdownResponse) {}
 }
 
 message RegisterRequest {
@@ -49,20 +43,4 @@ message PingRequest {
 
 message PingResponse {
   bool success = 1;
-}
-
-message GetMetricsRequest {
-}
-
-message GetMetricsResponse {
-  float cpu_load = 1; // Carga simulada (onda sinusoidal)
-  string instance_id = 2; // Para validación defensiva
-}
-
-message ShutdownRequest {
-}
-
-message ShutdownResponse {
-  bool success = 1;
-  string instance_id = 2;
 }

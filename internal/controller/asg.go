@@ -4,7 +4,6 @@ import (
     "context"
     "fmt"
     "log"
-    "sort"
     "strconv"
     "time"
     "strings"
@@ -13,12 +12,8 @@ import (
     "github.com/aws/aws-sdk-go-v2/config"
     "github.com/aws/aws-sdk-go-v2/service/ec2"
     "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-    "google.golang.org/grpc"
-    "google.golang.org/grpc/credentials/insecure"
-
     appconfig "github.com/marendonq/distributed-ec2-autoscaler/config"
     "github.com/marendonq/distributed-ec2-autoscaler/internal/domain"
-    pb "github.com/marendonq/distributed-ec2-autoscaler/api/proto/monitor"
 )
 
 type Registry interface {
@@ -128,32 +123,11 @@ func (c *ASGController) reconcile(ctx context.Context) {
     // asumimos el activeCount basado en AWS hasta que se registren.
     if activeCount < len(awsInstances) {
         log.Printf("ControllerASG: Detectadas %d instancias en AWS, pero solo %d activas localmente. Esperando registro...", len(awsInstances), activeCount)
-        activeCount = len(awsInstances)
         // No tomamos acciones si no todas se han reportado
         return
     }
 
-    // Si no hay cooldown activo, evaluar métricas (HU-35)
-    if time.Since(c.lastScaleAction) < c.cooldown {
-        return
-    }
-
-    if activeCount == 0 && c.minInstances > 0 {
-        log.Printf("No active instances. Scaling up to reach minInstances (%d)", c.minInstances)
-        c.scaleUp(ctx)
-        return
-    }
-
-    avgLoad := totalLoad / float32(activeCount)
-    log.Printf("ControllerASG Status: %d instances, AvgLoad: %.2f", activeCount, avgLoad)
-
-    if avgLoad > c.scaleUpThreshold && activeCount < c.maxInstances {
-        log.Printf("AvgLoad (%.2f) > Threshold (%.2f). Scaling UP.", avgLoad, c.scaleUpThreshold)
-        c.scaleUp(ctx)
-    } else if avgLoad < c.scaleDownThreshold && activeCount > c.minInstances {
-        log.Printf("AvgLoad (%.2f) < Threshold (%.2f). Scaling DOWN.", avgLoad, c.scaleDownThreshold)
-        c.scaleDown(ctx, localInstances) // Pass localInstances to find LIFO
-    }
+    // TODO: El cálculo de métricas y la decisión de ScaleUp / ScaleDown serán implementados aquí por otro miembro del equipo.
 }
 
 func (c *ASGController) getAWSInstances(ctx context.Context) ([]string, error) {
@@ -185,93 +159,9 @@ func (c *ASGController) getAWSInstances(ctx context.Context) ([]string, error) {
 }
 
 func (c *ASGController) scaleUp(ctx context.Context) {
-    // Configuración dura-codeada para el proyecto (t2.micro, etc.)
-    // Idealmente vendría del config.json
-    
-    // IP privada de la instancia MonitorS (para user-data)
-    monitorS_IP := "172.20.0.10" // Reemplazar en config real
-
-    userData := fmt.Sprintf("#!/bin/bash\necho \"export MONITOR_S_IP=%s\" > /etc/monitor_c.env\nsystemctl restart monitorc\n", monitorS_IP)
-
-    input := &ec2.RunInstancesInput{
-        ImageId:      aws.String("ami-0c7217cdde317cfec"), // Reemplazar con AMI base real
-        InstanceType: types.InstanceTypeT2Micro,
-        MinCount:     aws.Int32(1),
-        MaxCount:     aws.Int32(1),
-        KeyName:      aws.String("vockey"),
-        UserData:     aws.String(userData),
-        TagSpecifications: []types.TagSpecification{
-            {
-                ResourceType: types.ResourceTypeInstance,
-                Tags: []types.Tag{
-                    {Key: aws.String("Project"), Value: aws.String("Teleproy2-ASG")},
-                    {Key: aws.String("Name"), Value: aws.String("AppInstance-AutoScaled")},
-                },
-            },
-        },
-    }
-
-    log.Println("Calling AWS EC2 RunInstances...")
-    _, err := c.ec2Cli.RunInstances(ctx, input)
-    if err != nil {
-        log.Printf("Scale UP failed: %v", err)
-        return
-    }
-    
-    log.Println("Scale UP successful. Cooldown started.")
-    c.lastScaleAction = time.Now()
+    log.Println("TODO: scaleUp implementation pending (HU-05)")
 }
 
 func (c *ASGController) scaleDown(ctx context.Context, localInstances []*domain.Instance) {
-    // Seleccionar la más nueva (LIFO) según el Word doc
-    sort.Slice(localInstances, func(i, j int) bool {
-        return localInstances[i].LastSeen > localInstances[j].LastSeen // Más reciente primero
-    })
-
-    var target *domain.Instance
-    for _, inst := range localInstances {
-        if inst.Status == domain.StatusActive {
-            target = inst
-            break
-        }
-    }
-
-    if target == nil {
-        return
-    }
-
-    log.Printf("Selected instance %s for Scale DOWN", target.ID)
-
-    // Shutdown ordenado vía gRPC
-    port := target.Meta["grpc_port"]
-    if port == "" {
-        port = "50052"
-    }
-    addr := fmt.Sprintf("%s:%s", target.IP, port)
-    
-    grpcCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
-    defer cancel()
-    
-    conn, err := grpc.DialContext(grpcCtx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-    if err == nil {
-        client := pb.NewMonitorCServiceClient(conn)
-        client.Shutdown(grpcCtx, &pb.ShutdownRequest{})
-        conn.Close()
-        log.Printf("Sent graceful shutdown to %s", target.ID)
-    }
-
-    // Call EC2 Terminate
-    input := &ec2.TerminateInstancesInput{
-        InstanceIds: []string{target.ID},
-    }
-
-    _, err = c.ec2Cli.TerminateInstances(ctx, input)
-    if err != nil {
-        log.Printf("Scale DOWN failed to terminate in AWS: %v", err)
-        return
-    }
-
-    c.registry.Delete(target.ID)
-    log.Println("Scale DOWN successful. Cooldown started.")
-    c.lastScaleAction = time.Now()
+    log.Println("TODO: scaleDown implementation pending (HU-06/HU-14)")
 }

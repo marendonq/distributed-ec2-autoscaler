@@ -128,19 +128,13 @@ func pollInstance(inst *domain.Instance, svc interface{ RegisterInstance(*domain
     conn, err := grpc.DialContext(ctx, target, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
     
     success := false
-    var load float32 = 0.0
     
     if err == nil {
         client := pb.NewMonitorCServiceClient(conn)
         // 1. Ping
         _, errPing := client.Ping(ctx, &pb.PingRequest{})
-        // 2. GetMetrics
         if errPing == nil {
-            resp, errMet := client.GetMetrics(ctx, &pb.GetMetricsRequest{})
-            if errMet == nil {
-                success = true
-                load = resp.CpuLoad
-            }
+            success = true
         }
         conn.Close()
     }
@@ -151,7 +145,6 @@ func pollInstance(inst *domain.Instance, svc interface{ RegisterInstance(*domain
     if success {
         inst.LastSeen = time.Now().Unix()
         inst.Meta["failures"] = "0"
-        inst.Meta["cpu_load"] = fmt.Sprintf("%.2f", load)
         svc.RegisterInstance(inst) // Actualizar datos
     } else {
         failures++

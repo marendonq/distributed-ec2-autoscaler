@@ -317,182 +317,6 @@ func (x *PingResponse) GetSuccess() bool {
 	return false
 }
 
-type GetMetricsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetMetricsRequest) Reset() {
-	*x = GetMetricsRequest{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetMetricsRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetMetricsRequest) ProtoMessage() {}
-
-func (x *GetMetricsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetMetricsRequest.ProtoReflect.Descriptor instead.
-func (*GetMetricsRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{6}
-}
-
-type GetMetricsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CpuLoad       float32                `protobuf:"fixed32,1,opt,name=cpu_load,json=cpuLoad,proto3" json:"cpu_load,omitempty"`        // Carga simulada (onda sinusoidal)
-	InstanceId    string                 `protobuf:"bytes,2,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"` // Para validación defensiva
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetMetricsResponse) Reset() {
-	*x = GetMetricsResponse{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetMetricsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetMetricsResponse) ProtoMessage() {}
-
-func (x *GetMetricsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetMetricsResponse.ProtoReflect.Descriptor instead.
-func (*GetMetricsResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *GetMetricsResponse) GetCpuLoad() float32 {
-	if x != nil {
-		return x.CpuLoad
-	}
-	return 0
-}
-
-func (x *GetMetricsResponse) GetInstanceId() string {
-	if x != nil {
-		return x.InstanceId
-	}
-	return ""
-}
-
-type ShutdownRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ShutdownRequest) Reset() {
-	*x = ShutdownRequest{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ShutdownRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ShutdownRequest) ProtoMessage() {}
-
-func (x *ShutdownRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ShutdownRequest.ProtoReflect.Descriptor instead.
-func (*ShutdownRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{8}
-}
-
-type ShutdownResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	InstanceId    string                 `protobuf:"bytes,2,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ShutdownResponse) Reset() {
-	*x = ShutdownResponse{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ShutdownResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ShutdownResponse) ProtoMessage() {}
-
-func (x *ShutdownResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ShutdownResponse.ProtoReflect.Descriptor instead.
-func (*ShutdownResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *ShutdownResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *ShutdownResponse) GetInstanceId() string {
-	if x != nil {
-		return x.InstanceId
-	}
-	return ""
-}
-
 var File_api_proto_monitor_monitor_proto protoreflect.FileDescriptor
 
 const file_api_proto_monitor_monitor_proto_rawDesc = "" +
@@ -518,26 +342,13 @@ const file_api_proto_monitor_monitor_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"\r\n" +
 	"\vPingRequest\"(\n" +
 	"\fPingResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x13\n" +
-	"\x11GetMetricsRequest\"P\n" +
-	"\x12GetMetricsResponse\x12\x19\n" +
-	"\bcpu_load\x18\x01 \x01(\x02R\acpuLoad\x12\x1f\n" +
-	"\vinstance_id\x18\x02 \x01(\tR\n" +
-	"instanceId\"\x11\n" +
-	"\x0fShutdownRequest\"M\n" +
-	"\x10ShutdownResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1f\n" +
-	"\vinstance_id\x18\x02 \x01(\tR\n" +
-	"instanceId2\x9d\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\x9d\x01\n" +
 	"\x0fMonitorSService\x12A\n" +
 	"\bRegister\x12\x18.monitor.RegisterRequest\x1a\x19.monitor.RegisterResponse\"\x00\x12G\n" +
 	"\n" +
-	"Deregister\x12\x1a.monitor.DeregisterRequest\x1a\x1b.monitor.DeregisterResponse\"\x002\xd4\x01\n" +
+	"Deregister\x12\x1a.monitor.DeregisterRequest\x1a\x1b.monitor.DeregisterResponse\"\x002H\n" +
 	"\x0fMonitorCService\x125\n" +
-	"\x04Ping\x12\x14.monitor.PingRequest\x1a\x15.monitor.PingResponse\"\x00\x12G\n" +
-	"\n" +
-	"GetMetrics\x12\x1a.monitor.GetMetricsRequest\x1a\x1b.monitor.GetMetricsResponse\"\x00\x12A\n" +
-	"\bShutdown\x12\x18.monitor.ShutdownRequest\x1a\x19.monitor.ShutdownResponse\"\x00BCZAgithub.com/marendonq/distributed-ec2-autoscaler/api/proto/monitorb\x06proto3"
+	"\x04Ping\x12\x14.monitor.PingRequest\x1a\x15.monitor.PingResponse\"\x00BCZAgithub.com/marendonq/distributed-ec2-autoscaler/api/proto/monitorb\x06proto3"
 
 var (
 	file_api_proto_monitor_monitor_proto_rawDescOnce sync.Once
@@ -551,7 +362,7 @@ func file_api_proto_monitor_monitor_proto_rawDescGZIP() []byte {
 	return file_api_proto_monitor_monitor_proto_rawDescData
 }
 
-var file_api_proto_monitor_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_api_proto_monitor_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_api_proto_monitor_monitor_proto_goTypes = []any{
 	(*RegisterRequest)(nil),    // 0: monitor.RegisterRequest
 	(*RegisterResponse)(nil),   // 1: monitor.RegisterResponse
@@ -559,29 +370,21 @@ var file_api_proto_monitor_monitor_proto_goTypes = []any{
 	(*DeregisterResponse)(nil), // 3: monitor.DeregisterResponse
 	(*PingRequest)(nil),        // 4: monitor.PingRequest
 	(*PingResponse)(nil),       // 5: monitor.PingResponse
-	(*GetMetricsRequest)(nil),  // 6: monitor.GetMetricsRequest
-	(*GetMetricsResponse)(nil), // 7: monitor.GetMetricsResponse
-	(*ShutdownRequest)(nil),    // 8: monitor.ShutdownRequest
-	(*ShutdownResponse)(nil),   // 9: monitor.ShutdownResponse
-	nil,                        // 10: monitor.RegisterRequest.MetaEntry
+	nil,                        // 6: monitor.RegisterRequest.MetaEntry
 }
 var file_api_proto_monitor_monitor_proto_depIdxs = []int32{
-	10, // 0: monitor.RegisterRequest.meta:type_name -> monitor.RegisterRequest.MetaEntry
-	0,  // 1: monitor.MonitorSService.Register:input_type -> monitor.RegisterRequest
-	2,  // 2: monitor.MonitorSService.Deregister:input_type -> monitor.DeregisterRequest
-	4,  // 3: monitor.MonitorCService.Ping:input_type -> monitor.PingRequest
-	6,  // 4: monitor.MonitorCService.GetMetrics:input_type -> monitor.GetMetricsRequest
-	8,  // 5: monitor.MonitorCService.Shutdown:input_type -> monitor.ShutdownRequest
-	1,  // 6: monitor.MonitorSService.Register:output_type -> monitor.RegisterResponse
-	3,  // 7: monitor.MonitorSService.Deregister:output_type -> monitor.DeregisterResponse
-	5,  // 8: monitor.MonitorCService.Ping:output_type -> monitor.PingResponse
-	7,  // 9: monitor.MonitorCService.GetMetrics:output_type -> monitor.GetMetricsResponse
-	9,  // 10: monitor.MonitorCService.Shutdown:output_type -> monitor.ShutdownResponse
-	6,  // [6:11] is the sub-list for method output_type
-	1,  // [1:6] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	6, // 0: monitor.RegisterRequest.meta:type_name -> monitor.RegisterRequest.MetaEntry
+	0, // 1: monitor.MonitorSService.Register:input_type -> monitor.RegisterRequest
+	2, // 2: monitor.MonitorSService.Deregister:input_type -> monitor.DeregisterRequest
+	4, // 3: monitor.MonitorCService.Ping:input_type -> monitor.PingRequest
+	1, // 4: monitor.MonitorSService.Register:output_type -> monitor.RegisterResponse
+	3, // 5: monitor.MonitorSService.Deregister:output_type -> monitor.DeregisterResponse
+	5, // 6: monitor.MonitorCService.Ping:output_type -> monitor.PingResponse
+	4, // [4:7] is the sub-list for method output_type
+	1, // [1:4] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_monitor_monitor_proto_init() }
@@ -595,7 +398,7 @@ func file_api_proto_monitor_monitor_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_monitor_monitor_proto_rawDesc), len(file_api_proto_monitor_monitor_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
