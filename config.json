@@ -1,11 +1,25 @@
 {
-  "min_instances": 1,
+  "min_instances": 2,
   "max_instances": 5,
+  "region": "us-east-1",
+  "monitor_s_ip": "<MONITOR_S_PRIVATE_IP_ADDRESS>",
+  "monitor_s_port": 50052,
+  "monitor_c_port": 50051,
+  "heartbeat_check_interval_seconds": 10,
+  "heartbeat_timeout_seconds": 30,
   "ec2_params": {
-    "ami": "ami-0123456789abcdef0",
+    "ami": "<AMI_ID>",
     "instance_type": "t2.micro",
-    "key_name": "",
-    "security_groups": []
+    "key_name": "<llaveejemplo.pem>",
+    "security_groups": ["<APPINSTANCE_SG_ID>"],
+    "subnet_id": "<REPLACE_WITH_PRIVATE_SUBNET_ID",
+    "tags": {
+      "ManagedBy": "ControllerASG",
+      "Project": "ASG-Project2"
+    }
   },
+
   "policies": []
 }
+
+

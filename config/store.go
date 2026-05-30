@@ -2,6 +2,7 @@ package config
 
 import (
     "encoding/json"
+    "fmt"
     "io/ioutil"
     "os"
 )
@@ -15,6 +16,9 @@ func LoadConfig(path string) (*Config, error) {
         if err := SaveConfig(path, cfg); err != nil {
             return nil, err
         }
+        if err := Validate(cfg); err != nil {
+            return nil, fmt.Errorf("config validation failed: %w", err)
+        }
         return cfg, nil
     } else if err != nil {
         return nil, err
@@ -27,6 +31,9 @@ func LoadConfig(path string) (*Config, error) {
     var cfg Config
     if err := json.Unmarshal(data, &cfg); err != nil {
         return nil, err
+    }
+    if err := Validate(&cfg); err != nil {
+        return nil, fmt.Errorf("config validation failed: %w", err)
     }
     return &cfg, nil
 }
