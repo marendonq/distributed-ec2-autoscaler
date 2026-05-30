@@ -61,7 +61,7 @@ func main() {
 
     // Start gRPC server in background (kept for future gRPC support)
     go func() {
-        if err := monitor.StartGRPCServer(ctx, ":50051"); err != nil {
+        if err := monitor.StartGRPCServer(ctx, ":50051", svc); err != nil {
             log.Fatalf("gRPC server exited: %v", err)
         }
     }()

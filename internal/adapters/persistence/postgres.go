@@ -124,3 +124,16 @@ func (r *PostgresRegistry) MarkInactive(id string) error {
     }
     return nil
 }
+
+func (r *PostgresRegistry) Delete(id string) error {
+    q := `DELETE FROM instances WHERE id=$1`
+    res, err := r.db.Exec(q, id)
+    if err != nil {
+        return err
+    }
+    n, _ := res.RowsAffected()
+    if n == 0 {
+        return fmt.Errorf("not found")
+    }
+    return nil
+}

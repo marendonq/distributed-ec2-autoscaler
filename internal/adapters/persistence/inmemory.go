@@ -72,3 +72,13 @@ func (r *InMemoryRegistry) MarkInactive(id string) error {
     inst.Status = domain.StatusInactive
     return nil
 }
+
+func (r *InMemoryRegistry) Delete(id string) error {
+    r.mu.Lock()
+    defer r.mu.Unlock()
+    if _, ok := r.store[id]; !ok {
+        return errors.New("not found")
+    }
+    delete(r.store, id)
+    return nil
+}

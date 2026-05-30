@@ -25,6 +25,10 @@ func (s *MonitorService) MarkInactive(id string) error {
     return s.registry.MarkInactive(id)
 }
 
+func (s *MonitorService) Deregister(id string) error {
+    return s.registry.Delete(id)
+}
+
 // Heartbeat updates last-seen status for an instance. If instance does not
 // exist it will create a lightweight registration with the provided ID.
 func (s *MonitorService) Heartbeat(id string) error {

@@ -7,4 +7,5 @@ type InstanceRegistry interface {
     GetByID(id string) (*domain.Instance, error)
     List() ([]*domain.Instance, error)
     MarkInactive(id string) error
+    Delete(id string) error
 }

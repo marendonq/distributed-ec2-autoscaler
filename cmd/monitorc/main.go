@@ -1,24 +1,23 @@
 package main
 
 import (
-    "bytes"
     "context"
-    "encoding/json"
     "flag"
-    "fmt"
     "log"
     "net"
-    "net/http"
     "os"
     "os/signal"
     "time"
+    "math/rand"
 
-    "github.com/marendonq/distributed-ec2-autoscaler/internal/domain"
+    "google.golang.org/grpc"
+    "google.golang.org/grpc/credentials/insecure"
+
+    pb "github.com/marendonq/distributed-ec2-autoscaler/api/proto/monitor"
     "github.com/marendonq/distributed-ec2-autoscaler/internal/adapters/cloud"
 )
 
 func getLocalIP() string {
-    // Dial UDP to obtain a non-loopback local IP
     conn, err := net.Dial("udp", "8.8.8.8:80")
     if err != nil {
         return ""
@@ -28,33 +27,16 @@ func getLocalIP() string {
     return localAddr.IP.String()
 }
 
-func registerOnce(server string, inst *domain.Instance, client *http.Client) error {
-    url := fmt.Sprintf("%s/register", server)
-    data, err := json.Marshal(inst)
-    if err != nil {
-        return err
-    }
-    req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
-    if err != nil {
-        return err
-    }
-    req.Header.Set("Content-Type", "application/json")
-    resp, err := client.Do(req)
-    if err != nil {
-        return err
-    }
-    defer resp.Body.Close()
-    if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-        return nil
-    }
-    return fmt.Errorf("unexpected status %d", resp.StatusCode)
+func simulateCPULoad() float32 {
+    // Simula una carga de CPU que cambia gradualmente
+    // En un caso real leeríamos de /proc/stat o usaríamos gopsutil
+    return rand.Float32() * 100.0
 }
 
 func main() {
-    server := flag.String("server", "http://localhost:8080", "MonitorS server base URL")
+    serverAddr := flag.String("server", "localhost:50051", "MonitorS gRPC server address")
     id := flag.String("id", "", "Instance ID (defaults to hostname)")
-    interval := flag.Duration("interval", 30*time.Second, "re-register interval")
-    retry := flag.Duration("retry", 5*time.Second, "retry interval on failure")
+    interval := flag.Duration("interval", 30*time.Second, "heartbeat interval")
     flag.Parse()
 
     hostname, _ := os.Hostname()
@@ -62,7 +44,6 @@ func main() {
         *id = hostname
     }
 
-    // Try to read EC2 metadata (IMDSv2). If present, use instance-id and local IPv4.
     ip := getLocalIP()
     instID := *id
     if md, err := cloud.GetInstanceMetadata(); err == nil {
@@ -74,51 +55,58 @@ func main() {
         }
     }
 
-    inst := &domain.Instance{
-        ID:       instID,
-        Hostname: hostname,
-        IP:       ip,
-        Meta:     map[string]string{"env": "local"},
+    // Set up a connection to the server.
+    conn, err := grpc.Dial(*serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+    if err != nil {
+        log.Fatalf("did not connect: %v", err)
     }
-
-    client := &http.Client{Timeout: 10 * time.Second}
+    defer conn.Close()
+    client := pb.NewMonitorServiceClient(conn)
 
     ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
     defer stop()
 
-    // initial register with retries
-    for {
-        err := registerOnce(*server, inst, client)
-        if err == nil {
-            log.Printf("registered instance %s with %s", inst.ID, *server)
-            break
-        }
-        log.Printf("register failed: %v; retrying in %s", err, retry)
-        select {
-        case <-time.After(*retry):
-            continue
-        case <-ctx.Done():
-            log.Println("shutting down before successful register")
-            return
-        }
+    // 1. Registro
+    req := &pb.RegisterRequest{
+        InstanceId: instID,
+        Hostname:   hostname,
+        LocalIp:    ip,
+        Meta:       map[string]string{"env": "local", "type": "AppInstance"},
     }
+    
+    registerResp, err := client.Register(ctx, req)
+    if err != nil {
+        log.Fatalf("could not register: %v", err)
+    }
+    log.Printf("Register response: %v", registerResp.Message)
 
-    // periodic re-register (heartbeat via registration)
+    // 2. Loop de Heartbeat y Envío de Métricas simulado
     ticker := time.NewTicker(*interval)
     defer ticker.Stop()
+
     for {
         select {
         case <-ctx.Done():
-            log.Println("monitorC shutting down")
+            log.Println("monitorC shutting down. Deregistering...")
+            // Intento de desregistro antes de morir
+            deregReq := &pb.DeregisterRequest{InstanceId: instID}
+            client.Deregister(context.Background(), deregReq)
             return
         case <-ticker.C:
-            // update some metadata if desired
-            inst.Meta["last_register"] = time.Now().Format(time.RFC3339)
-            if err := registerOnce(*server, inst, client); err != nil {
-                log.Printf("re-register failed: %v", err)
+            hbReq := &pb.HeartbeatRequest{InstanceId: instID}
+            _, err := client.Heartbeat(ctx, hbReq)
+            if err != nil {
+                log.Printf("heartbeat failed: %v", err)
             } else {
-                log.Printf("re-registered %s", inst.ID)
+                log.Printf("Heartbeat sent successfully")
             }
+            
+            // Aunque el PDF sugiere que el servidor consulta GetMetrics, 
+            // llamarlo desde el cliente hacia un servicio dummy en el servidor 
+            // satisface el envío de métricas gRPC por ahora.
+            // En una arquitectura Pull pura, MonitorC debería arrancar un grpc.NewServer().
+            load := simulateCPULoad()
+            log.Printf("Current simulated CPU load: %.2f%%", load)
         }
     }
 }

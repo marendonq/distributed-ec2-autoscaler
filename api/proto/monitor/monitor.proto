@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package monitor;
+
+option go_package = "github.com/marendonq/distributed-ec2-autoscaler/api/proto/monitor";
+
+// El servicio MonitorS expone los métodos que el agente MonitorC puede llamar.
+service MonitorService {
+  // HU-01: Registro y Desregistro
+  rpc Register (RegisterRequest) returns (RegisterResponse) {}
+  rpc Deregister (DeregisterRequest) returns (DeregisterResponse) {}
+  
+  // HU-02: Verificación de vivacidad (Heartbeat)
+  rpc Heartbeat (HeartbeatRequest) returns (HeartbeatResponse) {}
+  
+  // GetMetrics: Obtener métricas de carga simulada del MonitorC
+  rpc GetMetrics (GetMetricsRequest) returns (GetMetricsResponse) {}
+}
+
+message RegisterRequest {
+  string instance_id = 1;
+  string hostname = 2;
+  string local_ip = 3;
+  map<string, string> meta = 4;
+}
+
+message RegisterResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message DeregisterRequest {
+  string instance_id = 1;
+}
+
+message DeregisterResponse {
+  bool success = 1;
+}
+
+message HeartbeatRequest {
+  string instance_id = 1;
+}
+
+message HeartbeatResponse {
+  bool success = 1;
+}
+
+message GetMetricsRequest {
+  string instance_id = 1;
+}
+
+message GetMetricsResponse {
+  float cpu_load = 1; // Carga simulada entre 0 y 100%
+}
