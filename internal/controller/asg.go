@@ -76,6 +76,13 @@ func (c *ASGController) Start(ctx context.Context) {
 }
 
 func (c *ASGController) reconcile(ctx context.Context) {
+
+    if !c.lastScaleAction.IsZero() && time.Since(c.lastScaleAction) < c.cooldown {
+    remaining := c.cooldown - time.Since(c.lastScaleAction)
+    log.Printf("Cooldown active, %v remaining. Skipping.", remaining)
+    return
+}
+
     // 1. Validar instancias reales vs AWS (HU-22)
     awsInstances, err := c.getAWSInstances(ctx)
     if err != nil {
