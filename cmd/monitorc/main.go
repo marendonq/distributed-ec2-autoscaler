@@ -43,6 +43,14 @@ func main() {
     id := flag.String("id", "", "Instance ID (defaults to hostname)")
     flag.Parse()
 
+    // HU-10: Dynamic MonitorS discovery
+    if *monitorSAddr == "localhost:50051" {
+        if discoveredIP := cloud.DiscoverMonitorS(); discoveredIP != "" {
+            *monitorSAddr = discoveredIP + ":50051"
+            log.Printf("HU-10: Usando MonitorS descubierto dinámicamente: %s", *monitorSAddr)
+        }
+    }
+
     hostname, _ := os.Hostname()
     if *id == "" {
         *id = hostname
