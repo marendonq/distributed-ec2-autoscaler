@@ -1,6 +1,9 @@
 package config
 import (
+    "encoding/json"
     "fmt"
+    "os"
+    "strconv"
     "strings"
 )
 
@@ -89,5 +92,93 @@ func Validate(cfg *Config) error {
     return fmt.Errorf("MaxInstances must be >= MinInstances (%d), got %d", cfg.MinInstances, cfg.MaxInstances)
 }
 
+    return nil
+}
+func ApplyEnvOverrides(cfg *Config) error {
+    if cfg == nil {
+        return nil
+    }
+    // AUTOSCALER_MIN_INSTANCES
+    if v := os.Getenv("AUTOSCALER_MIN_INSTANCES"); v != "" {
+        if n, err := strconv.Atoi(v); err != nil {
+            return fmt.Errorf("AUTOSCALER_MIN_INSTANCES invalid: %w", err)
+        } else {
+            cfg.MinInstances = n
+        }
+    }
+    // AUTOSCALER_MAX_INSTANCES
+    if v := os.Getenv("AUTOSCALER_MAX_INSTANCES"); v != "" {
+        if n, err := strconv.Atoi(v); err != nil {
+            return fmt.Errorf("AUTOSCALER_MAX_INSTANCES invalid: %w", err)
+        } else {
+            cfg.MaxInstances = n
+        }
+    }
+    // AUTOSCALER_REGION
+    if v := os.Getenv("AUTOSCALER_REGION"); v != "" {
+        cfg.Region = v
+    }
+    // AUTOSCALER_MONITOR_S_IP
+    if v := os.Getenv("AUTOSCALER_MONITOR_S_IP"); v != "" {
+        cfg.MonitorSIP = v
+    }
+    // AUTOSCALER_MONITOR_S_PORT
+    if v := os.Getenv("AUTOSCALER_MONITOR_S_PORT"); v != "" {
+        if n, err := strconv.Atoi(v); err != nil {
+            return fmt.Errorf("AUTOSCALER_MONITOR_S_PORT invalid: %w", err)
+        } else {
+            cfg.MonitorSPort = n
+        }
+    }
+    // AUTOSCALER_MONITOR_C_PORT
+    if v := os.Getenv("AUTOSCALER_MONITOR_C_PORT"); v != "" {
+        if n, err := strconv.Atoi(v); err != nil {
+            return fmt.Errorf("AUTOSCALER_MONITOR_C_PORT invalid: %w", err)
+        } else {
+            cfg.MonitorCPort = n
+        }
+    }
+    // AUTOSCALER_HEARTBEAT_CHECK_INTERVAL_SECONDS
+    if v := os.Getenv("AUTOSCALER_HEARTBEAT_CHECK_INTERVAL_SECONDS"); v != "" {
+        if n, err := strconv.Atoi(v); err != nil {
+            return fmt.Errorf("AUTOSCALER_HEARTBEAT_CHECK_INTERVAL_SECONDS invalid: %w", err)
+        } else {
+            cfg.HeartbeatCheckIntervalSeconds = n
+        }
+    }
+    // AUTOSCALER_HEARTBEAT_TIMEOUT_SECONDS
+    if v := os.Getenv("AUTOSCALER_HEARTBEAT_TIMEOUT_SECONDS"); v != "" {
+        if n, err := strconv.Atoi(v); err != nil {
+            return fmt.Errorf("AUTOSCALER_HEARTBEAT_TIMEOUT_SECONDS invalid: %w", err)
+        } else {
+            cfg.HeartbeatTimeoutSeconds = n
+        }
+    }
+    // AUTOSCALER_EC2_AMI
+    if v := os.Getenv("AUTOSCALER_EC2_AMI"); v != "" {
+        cfg.EC2Params.AMI = v
+    }
+    // AUTOSCALER_EC2_INSTANCE_TYPE
+    if v := os.Getenv("AUTOSCALER_EC2_INSTANCE_TYPE"); v != "" {
+        cfg.EC2Params.InstanceType = v
+    }
+    // AUTOSCALER_EC2_KEY_NAME
+    if v := os.Getenv("AUTOSCALER_EC2_KEY_NAME"); v != "" {
+        cfg.EC2Params.KeyName = v
+    }
+    // AUTOSCALER_EC2_SECURITY_GROUPS
+    if v := os.Getenv("AUTOSCALER_EC2_SECURITY_GROUPS"); v != "" {
+        cfg.EC2Params.SecurityGroups = strings.Split(v, ",")
+    }
+    // AUTOSCALER_EC2_SUBNET_ID
+    if v := os.Getenv("AUTOSCALER_EC2_SUBNET_ID"); v != "" {
+        cfg.EC2Params.SubnetID = v
+    }
+    // AUTOSCALER_EC2_TAGS
+    if v := os.Getenv("AUTOSCALER_EC2_TAGS"); v != "" {
+        if err := json.Unmarshal([]byte(v), &cfg.EC2Params.Tags); err != nil {
+            return fmt.Errorf("AUTOSCALER_EC2_TAGS invalid JSON: %w", err)
+        }
+    }
     return nil
 }

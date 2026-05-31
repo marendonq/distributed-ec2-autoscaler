@@ -22,6 +22,9 @@ func main() {
     if err != nil {
         log.Fatalf("failed to load config: %v", err)
     }
+    if err := config.ApplyEnvOverrides(cfg); err != nil {
+        log.Fatalf("failed to apply env overrides: %v", err)
+    }
     // Ensure heartbeat defaults if config file contains zero values
     if cfg.HeartbeatCheckIntervalSeconds <= 0 {
         cfg.HeartbeatCheckIntervalSeconds = 30

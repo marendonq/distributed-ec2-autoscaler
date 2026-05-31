@@ -28,6 +28,12 @@ func getLocalIP() string {
     localAddr := conn.LocalAddr().(*net.UDPAddr)
     return localAddr.IP.String()
 }
+func getEnvOrDefault(key, fallback string) string {
+    if v := os.Getenv(key); v != "" {
+        return v
+    }
+    return fallback
+}
 
 // Global state for MonitorC
 type monitorCServer struct {
@@ -97,9 +103,9 @@ func (s *monitorCServer) GetMetrics(ctx context.Context, req *pb.GetMetricsReque
 }
 
 func main() {
-    monitorSAddr := flag.String("server", "localhost:50051", "MonitorS gRPC server address")
-    listenAddr := flag.String("listen", ":50052", "Port to listen for MonitorS polling")
-    id := flag.String("id", "", "Instance ID (defaults to hostname)")
+    monitorSAddr := flag.String("server", getEnvOrDefault("MONITOR_S_ADDR", "localhost:50051"), "MonitorS gRPC server address")
+    listenAddr := flag.String("listen", getEnvOrDefault("MONITOR_C_LISTEN_ADDR", ":50052"), "Port to listen for MonitorS polling")
+    id := flag.String("id", getEnvOrDefault("INSTANCE_ID", ""), "Instance ID (defaults to hostname)")
     flag.Parse()
 
     hostname, _ := os.Hostname()

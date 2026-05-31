@@ -13,8 +13,14 @@ import (
     pb "github.com/marendonq/distributed-ec2-autoscaler/api/proto/monitor"
 )
 
+func getEnvOrDefault(key, fallback string) string {
+    if v := os.Getenv(key); v != "" {
+        return v
+    }
+    return fallback
+}
 func main() {
-    monitorSAddr := flag.String("server", "localhost:50051", "MonitorS address")
+    monitorSAddr := flag.String("server", getEnvOrDefault("MONITOR_S_ADDR", "localhost:50051"), "MonitorS address")
     watch := flag.Bool("watch", false, "Watch continuously")
     interval := flag.Duration("interval", 10*time.Second, "Watch interval")
     flag.Parse()
