@@ -9,6 +9,7 @@ service MonitorSService {
   // HU-01: Registro y Desregistro
   rpc Register (RegisterRequest) returns (RegisterResponse) {}
   rpc Deregister (DeregisterRequest) returns (DeregisterResponse) {}
+  rpc GetAggregatedMetrics (AggregatedMetricsRequest) returns (AggregatedMetricsResponse) {}
 }
 
 // Servicios expuestos por los Agentes (MonitorC)
@@ -54,3 +55,25 @@ message GetMetricsResponse {
   float cpu_load = 2;     // Porcentaje 0.0-100.0
   int64 timestamp = 3;
 }
+
+// === HU-15: Métricas Consolidadas ===
+message AggregatedMetricsRequest {}
+
+message AggregatedMetricsResponse {
+  bool success = 1;
+  float avg_cpu_load = 2;        // Promedio de carga CPU
+  int32 total_instances = 3;     // Total de instancias
+  int32 active_instances = 4;    // Instancias activas
+  int32 inactive_instances = 5;  // Instancias inactivas
+  repeated InstanceInfo instances = 6;  // Lista de instancias con sus métricas
+}
+
+message InstanceInfo {
+  string id = 1;
+  string hostname = 2;
+  string ip = 3;
+  float cpu_load = 4;
+  string status = 5;
+  int64 last_seen = 6;
+}
+

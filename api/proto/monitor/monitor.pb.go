@@ -414,6 +414,211 @@ func (x *GetMetricsResponse) GetTimestamp() int64 {
 	return 0
 }
 
+// === HU-15: Métricas Consolidadas ===
+type AggregatedMetricsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AggregatedMetricsRequest) Reset() {
+	*x = AggregatedMetricsRequest{}
+	mi := &file_api_proto_monitor_monitor_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AggregatedMetricsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AggregatedMetricsRequest) ProtoMessage() {}
+
+func (x *AggregatedMetricsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_monitor_monitor_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AggregatedMetricsRequest.ProtoReflect.Descriptor instead.
+func (*AggregatedMetricsRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{8}
+}
+
+type AggregatedMetricsResponse struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Success           bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	AvgCpuLoad        float32                `protobuf:"fixed32,2,opt,name=avg_cpu_load,json=avgCpuLoad,proto3" json:"avg_cpu_load,omitempty"`                   // Promedio de carga CPU
+	TotalInstances    int32                  `protobuf:"varint,3,opt,name=total_instances,json=totalInstances,proto3" json:"total_instances,omitempty"`          // Total de instancias
+	ActiveInstances   int32                  `protobuf:"varint,4,opt,name=active_instances,json=activeInstances,proto3" json:"active_instances,omitempty"`       // Instancias activas
+	InactiveInstances int32                  `protobuf:"varint,5,opt,name=inactive_instances,json=inactiveInstances,proto3" json:"inactive_instances,omitempty"` // Instancias inactivas
+	Instances         []*InstanceInfo        `protobuf:"bytes,6,rep,name=instances,proto3" json:"instances,omitempty"`                                           // Lista de instancias con sus métricas
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *AggregatedMetricsResponse) Reset() {
+	*x = AggregatedMetricsResponse{}
+	mi := &file_api_proto_monitor_monitor_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AggregatedMetricsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AggregatedMetricsResponse) ProtoMessage() {}
+
+func (x *AggregatedMetricsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_monitor_monitor_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AggregatedMetricsResponse.ProtoReflect.Descriptor instead.
+func (*AggregatedMetricsResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *AggregatedMetricsResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *AggregatedMetricsResponse) GetAvgCpuLoad() float32 {
+	if x != nil {
+		return x.AvgCpuLoad
+	}
+	return 0
+}
+
+func (x *AggregatedMetricsResponse) GetTotalInstances() int32 {
+	if x != nil {
+		return x.TotalInstances
+	}
+	return 0
+}
+
+func (x *AggregatedMetricsResponse) GetActiveInstances() int32 {
+	if x != nil {
+		return x.ActiveInstances
+	}
+	return 0
+}
+
+func (x *AggregatedMetricsResponse) GetInactiveInstances() int32 {
+	if x != nil {
+		return x.InactiveInstances
+	}
+	return 0
+}
+
+func (x *AggregatedMetricsResponse) GetInstances() []*InstanceInfo {
+	if x != nil {
+		return x.Instances
+	}
+	return nil
+}
+
+type InstanceInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Hostname      string                 `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	Ip            string                 `protobuf:"bytes,3,opt,name=ip,proto3" json:"ip,omitempty"`
+	CpuLoad       float32                `protobuf:"fixed32,4,opt,name=cpu_load,json=cpuLoad,proto3" json:"cpu_load,omitempty"`
+	Status        string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	LastSeen      int64                  `protobuf:"varint,6,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InstanceInfo) Reset() {
+	*x = InstanceInfo{}
+	mi := &file_api_proto_monitor_monitor_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InstanceInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InstanceInfo) ProtoMessage() {}
+
+func (x *InstanceInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_monitor_monitor_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InstanceInfo.ProtoReflect.Descriptor instead.
+func (*InstanceInfo) Descriptor() ([]byte, []int) {
+	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *InstanceInfo) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *InstanceInfo) GetHostname() string {
+	if x != nil {
+		return x.Hostname
+	}
+	return ""
+}
+
+func (x *InstanceInfo) GetIp() string {
+	if x != nil {
+		return x.Ip
+	}
+	return ""
+}
+
+func (x *InstanceInfo) GetCpuLoad() float32 {
+	if x != nil {
+		return x.CpuLoad
+	}
+	return 0
+}
+
+func (x *InstanceInfo) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *InstanceInfo) GetLastSeen() int64 {
+	if x != nil {
+		return x.LastSeen
+	}
+	return 0
+}
+
 var File_api_proto_monitor_monitor_proto protoreflect.FileDescriptor
 
 const file_api_proto_monitor_monitor_proto_rawDesc = "" +
@@ -444,11 +649,28 @@ const file_api_proto_monitor_monitor_proto_rawDesc = "" +
 	"\x12GetMetricsResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x19\n" +
 	"\bcpu_load\x18\x02 \x01(\x02R\acpuLoad\x12\x1c\n" +
-	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp2\x9d\x01\n" +
+	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\"\x1a\n" +
+	"\x18AggregatedMetricsRequest\"\x8f\x02\n" +
+	"\x19AggregatedMetricsResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12 \n" +
+	"\favg_cpu_load\x18\x02 \x01(\x02R\n" +
+	"avgCpuLoad\x12'\n" +
+	"\x0ftotal_instances\x18\x03 \x01(\x05R\x0etotalInstances\x12)\n" +
+	"\x10active_instances\x18\x04 \x01(\x05R\x0factiveInstances\x12-\n" +
+	"\x12inactive_instances\x18\x05 \x01(\x05R\x11inactiveInstances\x123\n" +
+	"\tinstances\x18\x06 \x03(\v2\x15.monitor.InstanceInfoR\tinstances\"\x9a\x01\n" +
+	"\fInstanceInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
+	"\bhostname\x18\x02 \x01(\tR\bhostname\x12\x0e\n" +
+	"\x02ip\x18\x03 \x01(\tR\x02ip\x12\x19\n" +
+	"\bcpu_load\x18\x04 \x01(\x02R\acpuLoad\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\x12\x1b\n" +
+	"\tlast_seen\x18\x06 \x01(\x03R\blastSeen2\xfe\x01\n" +
 	"\x0fMonitorSService\x12A\n" +
 	"\bRegister\x12\x18.monitor.RegisterRequest\x1a\x19.monitor.RegisterResponse\"\x00\x12G\n" +
 	"\n" +
-	"Deregister\x12\x1a.monitor.DeregisterRequest\x1a\x1b.monitor.DeregisterResponse\"\x002\x91\x01\n" +
+	"Deregister\x12\x1a.monitor.DeregisterRequest\x1a\x1b.monitor.DeregisterResponse\"\x00\x12_\n" +
+	"\x14GetAggregatedMetrics\x12!.monitor.AggregatedMetricsRequest\x1a\".monitor.AggregatedMetricsResponse\"\x002\x91\x01\n" +
 	"\x0fMonitorCService\x125\n" +
 	"\x04Ping\x12\x14.monitor.PingRequest\x1a\x15.monitor.PingResponse\"\x00\x12G\n" +
 	"\n" +
@@ -466,33 +688,39 @@ func file_api_proto_monitor_monitor_proto_rawDescGZIP() []byte {
 	return file_api_proto_monitor_monitor_proto_rawDescData
 }
 
-var file_api_proto_monitor_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_api_proto_monitor_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_api_proto_monitor_monitor_proto_goTypes = []any{
-	(*RegisterRequest)(nil),    // 0: monitor.RegisterRequest
-	(*RegisterResponse)(nil),   // 1: monitor.RegisterResponse
-	(*DeregisterRequest)(nil),  // 2: monitor.DeregisterRequest
-	(*DeregisterResponse)(nil), // 3: monitor.DeregisterResponse
-	(*PingRequest)(nil),        // 4: monitor.PingRequest
-	(*PingResponse)(nil),       // 5: monitor.PingResponse
-	(*GetMetricsRequest)(nil),  // 6: monitor.GetMetricsRequest
-	(*GetMetricsResponse)(nil), // 7: monitor.GetMetricsResponse
-	nil,                        // 8: monitor.RegisterRequest.MetaEntry
+	(*RegisterRequest)(nil),           // 0: monitor.RegisterRequest
+	(*RegisterResponse)(nil),          // 1: monitor.RegisterResponse
+	(*DeregisterRequest)(nil),         // 2: monitor.DeregisterRequest
+	(*DeregisterResponse)(nil),        // 3: monitor.DeregisterResponse
+	(*PingRequest)(nil),               // 4: monitor.PingRequest
+	(*PingResponse)(nil),              // 5: monitor.PingResponse
+	(*GetMetricsRequest)(nil),         // 6: monitor.GetMetricsRequest
+	(*GetMetricsResponse)(nil),        // 7: monitor.GetMetricsResponse
+	(*AggregatedMetricsRequest)(nil),  // 8: monitor.AggregatedMetricsRequest
+	(*AggregatedMetricsResponse)(nil), // 9: monitor.AggregatedMetricsResponse
+	(*InstanceInfo)(nil),              // 10: monitor.InstanceInfo
+	nil,                               // 11: monitor.RegisterRequest.MetaEntry
 }
 var file_api_proto_monitor_monitor_proto_depIdxs = []int32{
-	8, // 0: monitor.RegisterRequest.meta:type_name -> monitor.RegisterRequest.MetaEntry
-	0, // 1: monitor.MonitorSService.Register:input_type -> monitor.RegisterRequest
-	2, // 2: monitor.MonitorSService.Deregister:input_type -> monitor.DeregisterRequest
-	4, // 3: monitor.MonitorCService.Ping:input_type -> monitor.PingRequest
-	6, // 4: monitor.MonitorCService.GetMetrics:input_type -> monitor.GetMetricsRequest
-	1, // 5: monitor.MonitorSService.Register:output_type -> monitor.RegisterResponse
-	3, // 6: monitor.MonitorSService.Deregister:output_type -> monitor.DeregisterResponse
-	5, // 7: monitor.MonitorCService.Ping:output_type -> monitor.PingResponse
-	7, // 8: monitor.MonitorCService.GetMetrics:output_type -> monitor.GetMetricsResponse
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	11, // 0: monitor.RegisterRequest.meta:type_name -> monitor.RegisterRequest.MetaEntry
+	10, // 1: monitor.AggregatedMetricsResponse.instances:type_name -> monitor.InstanceInfo
+	0,  // 2: monitor.MonitorSService.Register:input_type -> monitor.RegisterRequest
+	2,  // 3: monitor.MonitorSService.Deregister:input_type -> monitor.DeregisterRequest
+	8,  // 4: monitor.MonitorSService.GetAggregatedMetrics:input_type -> monitor.AggregatedMetricsRequest
+	4,  // 5: monitor.MonitorCService.Ping:input_type -> monitor.PingRequest
+	6,  // 6: monitor.MonitorCService.GetMetrics:input_type -> monitor.GetMetricsRequest
+	1,  // 7: monitor.MonitorSService.Register:output_type -> monitor.RegisterResponse
+	3,  // 8: monitor.MonitorSService.Deregister:output_type -> monitor.DeregisterResponse
+	9,  // 9: monitor.MonitorSService.GetAggregatedMetrics:output_type -> monitor.AggregatedMetricsResponse
+	5,  // 10: monitor.MonitorCService.Ping:output_type -> monitor.PingResponse
+	7,  // 11: monitor.MonitorCService.GetMetrics:output_type -> monitor.GetMetricsResponse
+	7,  // [7:12] is the sub-list for method output_type
+	2,  // [2:7] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_monitor_monitor_proto_init() }
@@ -506,7 +734,7 @@ func file_api_proto_monitor_monitor_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_monitor_monitor_proto_rawDesc), len(file_api_proto_monitor_monitor_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

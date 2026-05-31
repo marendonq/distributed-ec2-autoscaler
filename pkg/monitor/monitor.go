@@ -53,6 +53,64 @@ func (s *monitorSServer) Deregister(ctx context.Context, req *pb.DeregisterReque
     return &pb.DeregisterResponse{Success: true}, nil
 }
 
+func (s *monitorSServer) GetAggregatedMetrics(ctx context.Context, req *pb.AggregatedMetricsRequest) (*pb.AggregatedMetricsResponse, error) {
+    instances, err := s.svc.ListInstances()
+    if err != nil {
+        return &pb.AggregatedMetricsResponse{Success: false}, nil
+    }
+
+    var totalLoad float32 = 0
+    activeCount := 0
+    inactiveCount := 0
+    
+    for _, inst := range instances {
+        if inst.Status == domain.StatusActive {
+            activeCount++
+            if loadStr, ok := inst.Meta["cpu_load"]; ok {
+                if load, err := strconv.ParseFloat(loadStr, 32); err == nil {
+                    totalLoad += float32(load)
+                }
+            }
+        } else {
+            inactiveCount++
+        }
+    }
+
+    avgLoad := float32(0)
+    if activeCount > 0 {
+        avgLoad = totalLoad / float32(activeCount)
+    }
+
+    // Construir lista de instancias
+    var instanceInfos []*pb.InstanceInfo
+    for _, inst := range instances {
+        load := float32(0)
+        if loadStr, ok := inst.Meta["cpu_load"]; ok {
+            if l, err := strconv.ParseFloat(loadStr, 32); err == nil {
+                load = float32(l)
+            }
+        }
+        instanceInfos = append(instanceInfos, &pb.InstanceInfo{
+            Id:        inst.ID,
+            Hostname:  inst.Hostname,
+            Ip:        inst.IP,
+            CpuLoad:   load,
+            Status:    string(inst.Status),
+            LastSeen:  inst.LastSeen,
+        })
+    }
+
+    return &pb.AggregatedMetricsResponse{
+        Success:          true,
+        AvgCpuLoad:       avgLoad,
+        TotalInstances:   int32(len(instances)),
+        ActiveInstances:  int32(activeCount),
+        InactiveInstances: int32(inactiveCount),
+        Instances:        instanceInfos,
+    }, nil
+}
+
+
 // StartGRPCServer starts a gRPC server listening on addr. It returns when Serve exits.
 func StartGRPCServer(ctx context.Context, addr string, svc *service.MonitorService) error {
     lis, err := net.Listen("tcp", addr)
