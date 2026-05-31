@@ -135,6 +135,12 @@ func pollInstance(inst *domain.Instance, svc interface{ RegisterInstance(*domain
         _, errPing := client.Ping(ctx, &pb.PingRequest{})
         if errPing == nil {
             success = true
+            
+            // 2. HU-03: Obtener métricas de CPU
+            metricsResp, errMetrics := client.GetMetrics(ctx, &pb.GetMetricsRequest{})
+            if errMetrics == nil && metricsResp.Success {
+                inst.Meta["cpu_load"] = fmt.Sprintf("%.2f", metricsResp.CpuLoad)
+            }
         }
         conn.Close()
     }

@@ -3,10 +3,13 @@ package main
 import (
     "context"
     "flag"
+    "fmt"
     "log"
     "net"
     "os"
     "os/signal"
+    "strconv"
+    "strings"
     "time"
 
     "google.golang.org/grpc"
@@ -35,6 +38,62 @@ type monitorCServer struct {
 func (s *monitorCServer) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
     // Ping sencillo para HU-02 (Vivacidad)
     return &pb.PingResponse{Success: true}, nil
+}
+
+// getCPULoad reads /proc/stat to calculate current CPU usage percentage
+func getCPULoad() (float32, error) {
+    data, err := os.ReadFile("/proc/stat")
+    if err != nil {
+        return 0, err
+    }
+
+    lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+    if len(lines) == 0 {
+        return 0, fmt.Errorf("no cpu stats found")
+    }
+
+    fields := strings.Fields(lines[0])
+    if len(fields) < 8 {
+        return 0, fmt.Errorf("invalid cpu stat format")
+    }
+
+    // user, nice, system, idle, iowait, irq, softirq, steal
+    var values [8]float32
+    for i := 0; i < 8; i++ {
+        v, _ := strconv.ParseFloat(fields[i+1], 32)
+        values[i] = float32(v)
+    }
+
+    idle := values[3]
+    total := values[0] + values[1] + values[2] + values[3] + values[4] + values[5] + values[6] + values[7]
+
+    // Calculate load percentage
+    if total == 0 {
+        return 0, nil
+    }
+
+    load := ((total - idle) / total) * 100
+    if load < 0 {
+        load = 0
+    }
+    if load > 100 {
+        load = 100
+    }
+
+    return load, nil
+}
+
+func (s *monitorCServer) GetMetrics(ctx context.Context, req *pb.GetMetricsRequest) (*pb.GetMetricsResponse, error) {
+    load, err := getCPULoad()
+    if err != nil {
+        log.Printf("GetMetrics error: %v", err)
+        return &pb.GetMetricsResponse{Success: false}, nil
+    }
+    return &pb.GetMetricsResponse{
+        Success:   true,
+        CpuLoad:   load,
+        Timestamp: time.Now().Unix(),
+    }, nil
 }
 
 func main() {
