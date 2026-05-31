@@ -22,6 +22,10 @@ const (
     EventMetricsRecorded        EventType = "metrics_recorded"
     EventFailure                EventType = "failure"
     EventASGCooldownActive      EventType = "asg_cooldown_active"
+    EventScaleUpTriggered       EventType = "scale_up_triggered"
+    EventScaleDownTriggered     EventType = "scale_down_triggered"
+    EventScaleUpCompleted       EventType = "scale_up_completed"
+    EventScaleDownCompleted     EventType = "scale_down_completed"
 )
 
 type SystemEvent struct {

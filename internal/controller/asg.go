@@ -4,15 +4,16 @@ import (
     "context"
     "fmt"
     "log"
-    "time"
     "strings"
+    "time"
 
     "github.com/aws/aws-sdk-go-v2/aws"
-    "github.com/aws/aws-sdk-go-v2/config"
+    awsconfig "github.com/aws/aws-sdk-go-v2/config"
     "github.com/aws/aws-sdk-go-v2/service/ec2"
     "github.com/aws/aws-sdk-go-v2/service/ec2/types"
     appconfig "github.com/marendonq/distributed-ec2-autoscaler/config"
     "github.com/marendonq/distributed-ec2-autoscaler/internal/domain"
+    cloud "github.com/marendonq/distributed-ec2-autoscaler/internal/adapters/cloud"
     "github.com/marendonq/distributed-ec2-autoscaler/internal/service"
 )
 
@@ -22,11 +23,23 @@ type Registry interface {
     GetAggregatedMetrics() (float32, int, int, error)
 }
 
+var createInstanceFn = func(ctx context.Context, cfg *appconfig.Config) (string, error) {
+    return cloud.CreateInstance(ctx, cfg)
+}
+
+var terminateInstanceFn = func(ctx context.Context, cfg *appconfig.Config, instanceID string) error {
+    return cloud.TerminateInstance(ctx, cfg, instanceID)
+}
+
+type eventRecorder interface {
+    RecordEvent(*domain.SystemEvent)
+}
+
 type ASGController struct {
     cfg      *appconfig.Config
     registry Registry
     ec2Cli   *ec2.Client
-    eventSvc *service.EventService
+    eventSvc eventRecorder
 
     // Scale limits
     minInstances int
@@ -42,7 +55,7 @@ type ASGController struct {
 
 func NewASGController(ctx context.Context, cfg *appconfig.Config, registry Registry, eventSvc *service.EventService) (*ASGController, error) {
     // Attempt to load AWS config. Uses LabRole/Environment implicitly from default chain.
-    awscfg, err := config.LoadDefaultConfig(ctx, config.WithRegion("us-east-1"))
+    awscfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(cfg.Region))
     if err != nil {
         return nil, fmt.Errorf("unable to load AWS SDK config: %v", err)
     }
@@ -181,31 +194,125 @@ func (c *ASGController) getAWSInstances(ctx context.Context) ([]string, error) {
 }
 
 func (c *ASGController) scaleUp(ctx context.Context) {
-    log.Println("TODO: scaleUp implementation pending (HU-05)")
-    instanceID := "i-placeholder-up"
-    // HU-11: registrar creacion de instancia en AWS
+    avgLoad, activeCount, _, _ := c.registry.GetAggregatedMetrics()
     if c.eventSvc != nil {
-        // HU-29: clasificar severidad del evento
         c.eventSvc.RecordEvent(domain.NewSystemEvent(
-            domain.EventInstanceCreated,
+            domain.EventScaleUpTriggered,
+            domain.SeverityWarning,
+            fmt.Sprintf("Scale up triggered (avgLoad %.1f%%)", avgLoad),
+            map[string]string{
+                "avg_load":       fmt.Sprintf("%.1f", avgLoad),
+                "threshold":      fmt.Sprintf("%.1f", c.scaleUpThreshold),
+                "active_before":  fmt.Sprintf("%d", activeCount),
+                "max_instances":  fmt.Sprintf("%d", c.maxInstances),
+            },
+        ))
+    }
+
+    instanceID, err := createInstanceFn(ctx, c.cfg)
+    if err != nil {
+        if c.eventSvc != nil {
+            c.eventSvc.RecordEvent(domain.NewSystemEvent(
+                domain.EventFailure,
+                domain.SeverityCritical,
+                fmt.Sprintf("Scale up failed: %v", err),
+                map[string]string{"error": err.Error()},
+            ))
+        }
+        return
+    }
+
+    if c.eventSvc != nil {
+        c.eventSvc.RecordEvent(domain.NewSystemEvent(
+            domain.EventScaleUpCompleted,
             domain.SeverityInfo,
             fmt.Sprintf("Instance %s created (%s)", instanceID, c.cfg.EC2Params.InstanceType),
-            map[string]string{"instance_id": instanceID, "instance_type": c.cfg.EC2Params.InstanceType},
+            map[string]string{
+                "instance_id":   instanceID,
+                "instance_type": c.cfg.EC2Params.InstanceType,
+                "avg_load":      fmt.Sprintf("%.1f", avgLoad),
+                "active_before": fmt.Sprintf("%d", activeCount),
+            },
         ))
     }
 }
 
 func (c *ASGController) scaleDown(ctx context.Context, localInstances []*domain.Instance) {
-    log.Println("TODO: scaleDown implementation pending (HU-06/HU-14)")
-    instanceID := "i-placeholder-down"
-    // HU-11: registrar terminacion de instancia en AWS
+    avgLoad, activeCount, _, _ := c.registry.GetAggregatedMetrics()
+    candidates := filterScaleDownCandidates(localInstances)
+    if len(candidates) == 0 {
+        log.Println("scaleDown: no candidates available")
+        return
+    }
+
+    victim := selectVictim(candidates)
+    instanceID := victim.ID
+
     if c.eventSvc != nil {
-        // HU-29: clasificar severidad del evento
         c.eventSvc.RecordEvent(domain.NewSystemEvent(
-            domain.EventInstanceDeleted,
-            domain.SeverityInfo,
-            fmt.Sprintf("Instance %s terminated", instanceID),
-            map[string]string{"instance_id": instanceID},
+            domain.EventScaleDownTriggered,
+            domain.SeverityWarning,
+            fmt.Sprintf("Scale down triggered for instance %s (avgLoad %.1f%%)", instanceID, avgLoad),
+            map[string]string{
+                "avg_load":        fmt.Sprintf("%.1f", avgLoad),
+                "threshold":       fmt.Sprintf("%.1f", c.scaleDownThreshold),
+                "active_before":   fmt.Sprintf("%d", activeCount),
+                "target_instance": instanceID,
+                "last_seen":       fmt.Sprintf("%d", victim.LastSeen),
+            },
         ))
     }
+
+    err := terminateInstanceFn(ctx, c.cfg, instanceID)
+    if err != nil {
+        if c.eventSvc != nil {
+            c.eventSvc.RecordEvent(domain.NewSystemEvent(
+                domain.EventFailure,
+                domain.SeverityCritical,
+                fmt.Sprintf("Scale down failed for %s: %v", instanceID, err),
+                map[string]string{
+                    "error":       err.Error(),
+                    "instance_id": instanceID,
+                },
+            ))
+        }
+        return
+    }
+
+    if c.eventSvc != nil {
+        c.eventSvc.RecordEvent(domain.NewSystemEvent(
+            domain.EventScaleDownCompleted,
+            domain.SeverityInfo,
+            fmt.Sprintf("Instance %s terminated", instanceID),
+            map[string]string{
+                "instance_id":   instanceID,
+                "avg_load":      fmt.Sprintf("%.1f", avgLoad),
+                "active_before": fmt.Sprintf("%d", activeCount),
+            },
+        ))
+    }
+
+    if err := c.registry.Delete(instanceID); err != nil {
+        log.Printf("scaleDown: failed to delete instance %s from registry: %v", instanceID, err)
+    }
+}
+
+func filterScaleDownCandidates(instances []*domain.Instance) []*domain.Instance {
+    var candidates []*domain.Instance
+    for _, inst := range instances {
+        if !strings.HasPrefix(inst.ID, "local-") && inst.Status == domain.StatusActive {
+            candidates = append(candidates, inst)
+        }
+    }
+    return candidates
+}
+
+func selectVictim(candidates []*domain.Instance) *domain.Instance {
+    victim := candidates[0]
+    for _, inst := range candidates[1:] {
+        if inst.LastSeen < victim.LastSeen {
+            victim = inst
+        }
+    }
+    return victim
 }
