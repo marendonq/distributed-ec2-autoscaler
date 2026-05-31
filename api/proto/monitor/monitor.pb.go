@@ -619,6 +619,194 @@ func (x *InstanceInfo) GetLastSeen() int64 {
 	return 0
 }
 
+// HU-11: GetEventsRequest
+type GetEventsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventType     *string                `protobuf:"bytes,1,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
+	AfterTimestamp *int64                `protobuf:"varint,2,opt,name=after_timestamp,json=afterTimestamp,proto3" json:"after_timestamp,omitempty"`
+	Limit         *int32                `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetEventsRequest) Reset() {
+	*x = GetEventsRequest{}
+	mi := &file_api_proto_monitor_monitor_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetEventsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetEventsRequest) ProtoMessage() {}
+
+func (x *GetEventsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_monitor_monitor_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*GetEventsRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetEventsRequest) GetEventType() string {
+	if x != nil && x.EventType != nil {
+		return *x.EventType
+	}
+	return ""
+}
+
+func (x *GetEventsRequest) GetAfterTimestamp() int64 {
+	if x != nil && x.AfterTimestamp != nil {
+		return *x.AfterTimestamp
+	}
+	return 0
+}
+
+func (x *GetEventsRequest) GetLimit() int32 {
+	if x != nil && x.Limit != nil {
+		return *x.Limit
+	}
+	return 0
+}
+
+// HU-11: GetEventsResponse
+type GetEventsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Events        []*SystemEvent         `protobuf:"bytes,2,rep,name=events,proto3" json:"events,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetEventsResponse) Reset() {
+	*x = GetEventsResponse{}
+	mi := &file_api_proto_monitor_monitor_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetEventsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetEventsResponse) ProtoMessage() {}
+
+func (x *GetEventsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_monitor_monitor_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*GetEventsResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetEventsResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *GetEventsResponse) GetEvents() []*SystemEvent {
+	if x != nil {
+		return x.Events
+	}
+	return nil
+}
+
+// HU-11: SystemEvent
+type SystemEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	Metadata      map[string]string      `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Timestamp     int64                  `protobuf:"varint,5,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SystemEvent) Reset() {
+	*x = SystemEvent{}
+	mi := &file_api_proto_monitor_monitor_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SystemEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SystemEvent) ProtoMessage() {}
+
+func (x *SystemEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_monitor_monitor_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*SystemEvent) Descriptor() ([]byte, []int) {
+	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SystemEvent) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *SystemEvent) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *SystemEvent) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *SystemEvent) GetMetadata() map[string]string {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+func (x *SystemEvent) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
 var File_api_proto_monitor_monitor_proto protoreflect.FileDescriptor
 
 const file_api_proto_monitor_monitor_proto_rawDesc = "" +
@@ -688,7 +876,7 @@ func file_api_proto_monitor_monitor_proto_rawDescGZIP() []byte {
 	return file_api_proto_monitor_monitor_proto_rawDescData
 }
 
-var file_api_proto_monitor_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_api_proto_monitor_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_api_proto_monitor_monitor_proto_goTypes = []any{
 	(*RegisterRequest)(nil),           // 0: monitor.RegisterRequest
 	(*RegisterResponse)(nil),          // 1: monitor.RegisterResponse
@@ -702,22 +890,28 @@ var file_api_proto_monitor_monitor_proto_goTypes = []any{
 	(*AggregatedMetricsResponse)(nil), // 9: monitor.AggregatedMetricsResponse
 	(*InstanceInfo)(nil),              // 10: monitor.InstanceInfo
 	nil,                               // 11: monitor.RegisterRequest.MetaEntry
+	(*GetEventsRequest)(nil),          // 12: monitor.GetEventsRequest
+	(*GetEventsResponse)(nil),         // 13: monitor.GetEventsResponse
+	(*SystemEvent)(nil),               // 14: monitor.SystemEvent
 }
 var file_api_proto_monitor_monitor_proto_depIdxs = []int32{
 	11, // 0: monitor.RegisterRequest.meta:type_name -> monitor.RegisterRequest.MetaEntry
 	10, // 1: monitor.AggregatedMetricsResponse.instances:type_name -> monitor.InstanceInfo
-	0,  // 2: monitor.MonitorSService.Register:input_type -> monitor.RegisterRequest
-	2,  // 3: monitor.MonitorSService.Deregister:input_type -> monitor.DeregisterRequest
-	8,  // 4: monitor.MonitorSService.GetAggregatedMetrics:input_type -> monitor.AggregatedMetricsRequest
-	4,  // 5: monitor.MonitorCService.Ping:input_type -> monitor.PingRequest
-	6,  // 6: monitor.MonitorCService.GetMetrics:input_type -> monitor.GetMetricsRequest
-	1,  // 7: monitor.MonitorSService.Register:output_type -> monitor.RegisterResponse
-	3,  // 8: monitor.MonitorSService.Deregister:output_type -> monitor.DeregisterResponse
-	9,  // 9: monitor.MonitorSService.GetAggregatedMetrics:output_type -> monitor.AggregatedMetricsResponse
-	5,  // 10: monitor.MonitorCService.Ping:output_type -> monitor.PingResponse
-	7,  // 11: monitor.MonitorCService.GetMetrics:output_type -> monitor.GetMetricsResponse
-	7,  // [7:12] is the sub-list for method output_type
-	2,  // [2:7] is the sub-list for method input_type
+	14, // 2: monitor.GetEventsResponse.events:type_name -> monitor.SystemEvent
+	0,  // 3: monitor.MonitorSService.Register:input_type -> monitor.RegisterRequest
+	2,  // 4: monitor.MonitorSService.Deregister:input_type -> monitor.DeregisterRequest
+	8,  // 5: monitor.MonitorSService.GetAggregatedMetrics:input_type -> monitor.AggregatedMetricsRequest
+	4,  // 6: monitor.MonitorCService.Ping:input_type -> monitor.PingRequest
+	6,  // 7: monitor.MonitorCService.GetMetrics:input_type -> monitor.GetMetricsRequest
+	1,  // 8: monitor.MonitorSService.Register:output_type -> monitor.RegisterResponse
+	3,  // 9: monitor.MonitorSService.Deregister:output_type -> monitor.DeregisterResponse
+	9,  // 10: monitor.MonitorSService.GetAggregatedMetrics:output_type -> monitor.AggregatedMetricsResponse
+	5,  // 11: monitor.MonitorCService.Ping:output_type -> monitor.PingResponse
+	7,  // 12: monitor.MonitorCService.GetMetrics:output_type -> monitor.GetMetricsResponse
+	12, // 13: monitor.MonitorSService.GetEvents:input_type -> monitor.GetEventsRequest
+	13, // 14: monitor.MonitorSService.GetEvents:output_type -> monitor.GetEventsResponse
+	14, // [14:15] is the sub-list for method output_type
+	2,  // [2:14] is the sub-list for method input_type
 	2,  // [2:2] is the sub-list for extension type_name
 	2,  // [2:2] is the sub-list for extension extendee
 	0,  // [0:2] is the sub-list for field type_name

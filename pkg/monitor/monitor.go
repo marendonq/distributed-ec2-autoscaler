@@ -20,7 +20,8 @@ import (
 
 type monitorSServer struct {
     pb.UnimplementedMonitorSServiceServer
-    svc *service.MonitorService
+    svc      *service.MonitorService
+    eventSvc *service.EventService
 }
 
 func (s *monitorSServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
@@ -42,6 +43,16 @@ func (s *monitorSServer) Register(ctx context.Context, req *pb.RegisterRequest) 
         return &pb.RegisterResponse{Success: false, Message: err.Error()}, nil
     }
     log.Printf("MonitorS: Registered instance %s (IP: %s, Port: %d)", inst.ID, req.LocalIp, req.GrpcPort)
+
+    // HU-11: registrar evento cuando un MonitorC se conecta
+    if s.eventSvc != nil {
+        s.eventSvc.RecordEvent(domain.NewSystemEvent(
+            domain.EventMonitorCRegistered,
+            fmt.Sprintf("MonitorC %s registered from IP %s", req.InstanceId, req.LocalIp),
+            map[string]string{"instance_id": req.InstanceId, "hostname": req.Hostname},
+        ))
+    }
+
     return &pb.RegisterResponse{Success: true, Message: "Registered successfully"}, nil
 }
 
@@ -50,6 +61,16 @@ func (s *monitorSServer) Deregister(ctx context.Context, req *pb.DeregisterReque
         return &pb.DeregisterResponse{Success: false}, nil
     }
     log.Printf("MonitorS: Deregistered instance %s", req.InstanceId)
+
+    // HU-11: registrar evento cuando una instancia se desregistra
+    if s.eventSvc != nil {
+        s.eventSvc.RecordEvent(domain.NewSystemEvent(
+            domain.EventInstanceDeleted,
+            fmt.Sprintf("Instance %s deregistered", req.InstanceId),
+            map[string]string{"instance_id": req.InstanceId},
+        ))
+    }
+
     return &pb.DeregisterResponse{Success: true}, nil
 }
 
@@ -100,6 +121,21 @@ func (s *monitorSServer) GetAggregatedMetrics(ctx context.Context, req *pb.Aggre
         })
     }
 
+    // HU-11: registrar metricas consolidadas como evento relevante
+    if s.eventSvc != nil && activeCount > 0 {
+        s.eventSvc.RecordEvent(domain.NewSystemEvent(
+            domain.EventMetricsRecorded,
+            fmt.Sprintf("Aggregated metrics: avg_cpu=%.1f%%, active=%d, inactive=%d, total=%d",
+                avgLoad, activeCount, inactiveCount, len(instances)),
+            map[string]string{
+                "avg_cpu_load":   fmt.Sprintf("%.2f", avgLoad),
+                "active_count":   fmt.Sprintf("%d", activeCount),
+                "inactive_count": fmt.Sprintf("%d", inactiveCount),
+                "total_count":    fmt.Sprintf("%d", len(instances)),
+            },
+        ))
+    }
+
     return &pb.AggregatedMetricsResponse{
         Success:          true,
         AvgCpuLoad:       avgLoad,
@@ -110,15 +146,54 @@ func (s *monitorSServer) GetAggregatedMetrics(ctx context.Context, req *pb.Aggre
     }, nil
 }
 
+func (s *monitorSServer) GetEvents(ctx context.Context, req *pb.GetEventsRequest) (*pb.GetEventsResponse, error) {
+    filter := make(map[string]string)
+    if req.EventType != nil && *req.EventType != "" {
+        filter["type"] = *req.EventType
+    }
+    if req.AfterTimestamp != nil && *req.AfterTimestamp > 0 {
+        filter["after_timestamp"] = fmt.Sprintf("%d", *req.AfterTimestamp)
+    }
+
+    events, err := s.svc.GetEvents(filter)
+    if err != nil {
+        return &pb.GetEventsResponse{Success: false}, nil
+    }
+
+    limit := 0
+    if req.Limit != nil {
+        limit = int(*req.Limit)
+    }
+    if limit > 0 && len(events) > limit {
+        events = events[:limit]
+    }
+
+    pbEvents := make([]*pb.SystemEvent, 0, len(events))
+    for _, e := range events {
+        pbEvents = append(pbEvents, &pb.SystemEvent{
+            Id:        e.ID,
+            Type:      string(e.Type),
+            Message:   e.Message,
+            Metadata:  e.Metadata,
+            Timestamp: e.Timestamp,
+        })
+    }
+
+    return &pb.GetEventsResponse{Success: true, Events: pbEvents}, nil
+}
+
 
 // StartGRPCServer starts a gRPC server listening on addr. It returns when Serve exits.
-func StartGRPCServer(ctx context.Context, addr string, svc *service.MonitorService) error {
+func StartGRPCServer(ctx context.Context, addr string, svc *service.MonitorService, eventSvc *service.EventService) error {
     lis, err := net.Listen("tcp", addr)
     if err != nil {
         return err
     }
     srv := grpc.NewServer()
-    pb.RegisterMonitorSServiceServer(srv, &monitorSServer{svc: svc})
+    pb.RegisterMonitorSServiceServer(srv, &monitorSServer{
+        svc:      svc,
+        eventSvc: eventSvc,
+    })
     
     go func() {
         <-ctx.Done()
@@ -134,7 +209,7 @@ func StartSchedulers(ctx context.Context, cfg *config.Config, svc interface{
     ListInstances() ([]*domain.Instance, error)
     RegisterInstance(*domain.Instance) error
     MarkInactive(string) error 
-}) {
+}, eventSvc *service.EventService) {
     interval := time.Duration(cfg.HeartbeatCheckIntervalSeconds) * time.Second
     if interval <= 0 {
         interval = 10 * time.Second // Word doc suggests 10s
@@ -163,7 +238,7 @@ func StartSchedulers(ctx context.Context, cfg *config.Config, svc interface{
                     wg.Add(1)
                     go func(instance *domain.Instance) {
                         defer wg.Done()
-                        pollInstance(instance, svc)
+                        pollInstance(instance, svc, eventSvc)
                     }(inst)
                 }
                 wg.Wait()
@@ -172,7 +247,7 @@ func StartSchedulers(ctx context.Context, cfg *config.Config, svc interface{
     }()
 }
 
-func pollInstance(inst *domain.Instance, svc interface{ RegisterInstance(*domain.Instance) error; MarkInactive(string) error }) {
+func pollInstance(inst *domain.Instance, svc interface{ RegisterInstance(*domain.Instance) error; MarkInactive(string) error }, eventSvc *service.EventService) {
     port := inst.Meta["grpc_port"]
     if port == "" {
         port = "50052" // default MonitorC port
@@ -199,6 +274,8 @@ func pollInstance(inst *domain.Instance, svc interface{ RegisterInstance(*domain
             if errMetrics == nil && metricsResp.Success {
                 inst.Meta["cpu_load"] = fmt.Sprintf("%.2f", metricsResp.CpuLoad)
             }
+        } else {
+            err = errPing
         }
         conn.Close()
     }
@@ -211,11 +288,28 @@ func pollInstance(inst *domain.Instance, svc interface{ RegisterInstance(*domain
         inst.Meta["failures"] = "0"
         svc.RegisterInstance(inst) // Actualizar datos
     } else {
+        // HU-11: registrar fallo de conexion al hacer poll
+        if eventSvc != nil {
+            eventSvc.RecordEvent(domain.NewSystemEvent(
+                domain.EventFailure,
+                fmt.Sprintf("Poll failed for %s: %v", inst.ID, err),
+                map[string]string{"instance_id": inst.ID, "host": inst.IP},
+            ))
+        }
+
         failures++
         inst.Meta["failures"] = fmt.Sprintf("%d", failures)
         if failures >= 3 {
             log.Printf("scheduler: marking %s inactive after 3 consecutive failures", inst.ID)
             svc.MarkInactive(inst.ID)
+            // HU-11: registrar cuando el scheduler marca una instancia inactiva
+            if eventSvc != nil {
+                eventSvc.RecordEvent(domain.NewSystemEvent(
+                    domain.EventInstanceMarkedInactive,
+                    fmt.Sprintf("Instance %s marked inactive after consecutive failures", inst.ID),
+                    map[string]string{"instance_id": inst.ID, "failures": inst.Meta["failures"]},
+                ))
+            }
         } else {
             svc.RegisterInstance(inst) // Actualizar conteo de fallos
         }

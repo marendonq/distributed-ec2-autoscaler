@@ -22,6 +22,7 @@ const (
 	MonitorSService_Register_FullMethodName             = "/monitor.MonitorSService/Register"
 	MonitorSService_Deregister_FullMethodName           = "/monitor.MonitorSService/Deregister"
 	MonitorSService_GetAggregatedMetrics_FullMethodName = "/monitor.MonitorSService/GetAggregatedMetrics"
+	MonitorSService_GetEvents_FullMethodName           = "/monitor.MonitorSService/GetEvents"
 )
 
 // MonitorSServiceClient is the client API for MonitorSService service.
@@ -34,6 +35,8 @@ type MonitorSServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Deregister(ctx context.Context, in *DeregisterRequest, opts ...grpc.CallOption) (*DeregisterResponse, error)
 	GetAggregatedMetrics(ctx context.Context, in *AggregatedMetricsRequest, opts ...grpc.CallOption) (*AggregatedMetricsResponse, error)
+	// HU-11: visualizacion de logs/eventos del sistema
+	GetEvents(ctx context.Context, in *GetEventsRequest, opts ...grpc.CallOption) (*GetEventsResponse, error)
 }
 
 type monitorSServiceClient struct {
@@ -74,6 +77,16 @@ func (c *monitorSServiceClient) GetAggregatedMetrics(ctx context.Context, in *Ag
 	return out, nil
 }
 
+func (c *monitorSServiceClient) GetEvents(ctx context.Context, in *GetEventsRequest, opts ...grpc.CallOption) (*GetEventsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetEventsResponse)
+	err := c.cc.Invoke(ctx, MonitorSService_GetEvents_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MonitorSServiceServer is the server API for MonitorSService service.
 // All implementations must embed UnimplementedMonitorSServiceServer
 // for forward compatibility.
@@ -84,6 +97,8 @@ type MonitorSServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Deregister(context.Context, *DeregisterRequest) (*DeregisterResponse, error)
 	GetAggregatedMetrics(context.Context, *AggregatedMetricsRequest) (*AggregatedMetricsResponse, error)
+	// HU-11: visualizacion de logs/eventos del sistema
+	GetEvents(context.Context, *GetEventsRequest) (*GetEventsResponse, error)
 	mustEmbedUnimplementedMonitorSServiceServer()
 }
 
@@ -102,6 +117,9 @@ func (UnimplementedMonitorSServiceServer) Deregister(context.Context, *Deregiste
 }
 func (UnimplementedMonitorSServiceServer) GetAggregatedMetrics(context.Context, *AggregatedMetricsRequest) (*AggregatedMetricsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAggregatedMetrics not implemented")
+}
+func (UnimplementedMonitorSServiceServer) GetEvents(context.Context, *GetEventsRequest) (*GetEventsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetEvents not implemented")
 }
 func (UnimplementedMonitorSServiceServer) mustEmbedUnimplementedMonitorSServiceServer() {}
 func (UnimplementedMonitorSServiceServer) testEmbeddedByValue()                         {}
@@ -178,6 +196,24 @@ func _MonitorSService_GetAggregatedMetrics_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MonitorSService_GetEvents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetEventsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MonitorSServiceServer).GetEvents(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MonitorSService_GetEvents_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MonitorSServiceServer).GetEvents(ctx, req.(*GetEventsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MonitorSService_ServiceDesc is the grpc.ServiceDesc for MonitorSService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -196,6 +232,10 @@ var MonitorSService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAggregatedMetrics",
 			Handler:    _MonitorSService_GetAggregatedMetrics_Handler,
+		},
+		{
+			MethodName: "GetEvents",
+			Handler:    _MonitorSService_GetEvents_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

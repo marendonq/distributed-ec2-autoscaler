@@ -7,10 +7,11 @@ import (
 
 type MonitorService struct {
     registry ports.InstanceRegistry
+    EventSvc *EventService
 }
 
-func NewMonitorService(r ports.InstanceRegistry) *MonitorService {
-    return &MonitorService{registry: r}
+func NewMonitorService(r ports.InstanceRegistry, eventSvc *EventService) *MonitorService {
+    return &MonitorService{registry: r, EventSvc: eventSvc}
 }
 
 func (s *MonitorService) RegisterInstance(inst *domain.Instance) error {
@@ -34,4 +35,11 @@ func (s *MonitorService) Deregister(id string) error {
 func (s *MonitorService) Heartbeat(id string) error {
     inst := &domain.Instance{ID: id}
     return s.registry.Register(inst)
+}
+
+func (s *MonitorService) GetEvents(filter map[string]string) ([]*domain.SystemEvent, error) {
+    if s == nil || s.EventSvc == nil {
+        return nil, nil
+    }
+    return s.EventSvc.GetEvents(filter)
 }

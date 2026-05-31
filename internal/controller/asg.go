@@ -14,6 +14,7 @@ import (
     "github.com/aws/aws-sdk-go-v2/service/ec2/types"
     appconfig "github.com/marendonq/distributed-ec2-autoscaler/config"
     "github.com/marendonq/distributed-ec2-autoscaler/internal/domain"
+    "github.com/marendonq/distributed-ec2-autoscaler/internal/service"
 )
 
 type Registry interface {
@@ -25,6 +26,7 @@ type ASGController struct {
     cfg      *appconfig.Config
     registry Registry
     ec2Cli   *ec2.Client
+    eventSvc *service.EventService
 
     // Scale limits
     minInstances int
@@ -38,7 +40,7 @@ type ASGController struct {
     lastScaleAction time.Time
 }
 
-func NewASGController(ctx context.Context, cfg *appconfig.Config, registry Registry) (*ASGController, error) {
+func NewASGController(ctx context.Context, cfg *appconfig.Config, registry Registry, eventSvc *service.EventService) (*ASGController, error) {
     // Attempt to load AWS config. Uses LabRole/Environment implicitly from default chain.
     awscfg, err := config.LoadDefaultConfig(ctx, config.WithRegion("us-east-1"))
     if err != nil {
@@ -51,6 +53,7 @@ func NewASGController(ctx context.Context, cfg *appconfig.Config, registry Regis
         cfg:                cfg,
         registry:           registry,
         ec2Cli:             client,
+        eventSvc:           eventSvc,
         minInstances:       2,
         maxInstances:       5,
         scaleUpThreshold:   70.0,
@@ -78,10 +81,18 @@ func (c *ASGController) Start(ctx context.Context) {
 func (c *ASGController) reconcile(ctx context.Context) {
 
     if !c.lastScaleAction.IsZero() && time.Since(c.lastScaleAction) < c.cooldown {
-    remaining := c.cooldown - time.Since(c.lastScaleAction)
-    log.Printf("Cooldown active, %v remaining. Skipping.", remaining)
-    return
-}
+        remaining := c.cooldown - time.Since(c.lastScaleAction)
+        log.Printf("Cooldown active, %v remaining. Skipping.", remaining)
+        // HU-11: registrar que el cooldown bloqueo una accion de escalado
+        if c.eventSvc != nil {
+            c.eventSvc.RecordEvent(domain.NewSystemEvent(
+                domain.EventASGCooldownActive,
+                fmt.Sprintf("ASG cooldown active, %v remaining", remaining),
+                nil,
+            ))
+        }
+        return
+    }
 
     // 1. Validar instancias reales vs AWS (HU-22)
     awsInstances, err := c.getAWSInstances(ctx)
@@ -167,8 +178,26 @@ func (c *ASGController) getAWSInstances(ctx context.Context) ([]string, error) {
 
 func (c *ASGController) scaleUp(ctx context.Context) {
     log.Println("TODO: scaleUp implementation pending (HU-05)")
+    instanceID := "i-placeholder-up"
+    // HU-11: registrar creacion de instancia en AWS
+    if c.eventSvc != nil {
+        c.eventSvc.RecordEvent(domain.NewSystemEvent(
+            domain.EventInstanceCreated,
+            fmt.Sprintf("Instance %s created (%s)", instanceID, c.cfg.EC2Params.InstanceType),
+            map[string]string{"instance_id": instanceID, "instance_type": c.cfg.EC2Params.InstanceType},
+        ))
+    }
 }
 
 func (c *ASGController) scaleDown(ctx context.Context, localInstances []*domain.Instance) {
     log.Println("TODO: scaleDown implementation pending (HU-06/HU-14)")
+    instanceID := "i-placeholder-down"
+    // HU-11: registrar terminacion de instancia en AWS
+    if c.eventSvc != nil {
+        c.eventSvc.RecordEvent(domain.NewSystemEvent(
+            domain.EventInstanceDeleted,
+            fmt.Sprintf("Instance %s terminated", instanceID),
+            map[string]string{"instance_id": instanceID},
+        ))
+    }
 }

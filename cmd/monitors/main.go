@@ -42,20 +42,28 @@ func main() {
     } else {
         reg = sq
     }
-    svc := service.NewMonitorService(reg)
+
+    // HU-11: inicializar event logger
+    eventStore, err := persistence.NewSQLiteEventStore("teleproy2.db")
+    if err != nil {
+        log.Printf("[HU-11] sqlite event store unavailable, logging disabled: %v", err)
+    }
+    eventSvc := service.NewEventService(eventStore) // eventStore puede ser nil, hay nil-guard
+
+    svc := service.NewMonitorService(reg, eventSvc)
 
     // Start schedulers (pass service to allow marking inactive)
-    monitor.StartSchedulers(ctx, cfg, svc)
+    monitor.StartSchedulers(ctx, cfg, svc, eventSvc)
 
     // Start gRPC server in background
     go func() {
-        if err := monitor.StartGRPCServer(ctx, ":50051", svc); err != nil {
+        if err := monitor.StartGRPCServer(ctx, ":50051", svc, eventSvc); err != nil {
             log.Fatalf("gRPC server exited: %v", err)
         }
     }()
 
     // Start ControllerASG (HU-35 & HU-22)
-    asg, err := controller.NewASGController(ctx, cfg, reg)
+    asg, err := controller.NewASGController(ctx, cfg, reg, eventSvc)
     if err != nil {
         log.Fatalf("failed to initialize ControllerASG: %v", err)
     }

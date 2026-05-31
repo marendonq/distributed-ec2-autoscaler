@@ -10,6 +10,8 @@ service MonitorSService {
   rpc Register (RegisterRequest) returns (RegisterResponse) {}
   rpc Deregister (DeregisterRequest) returns (DeregisterResponse) {}
   rpc GetAggregatedMetrics (AggregatedMetricsRequest) returns (AggregatedMetricsResponse) {}
+  // HU-11: visualizacion de logs/eventos del sistema
+  rpc GetEvents (GetEventsRequest) returns (GetEventsResponse) {}
 }
 
 // Servicios expuestos por los Agentes (MonitorC)
@@ -75,5 +77,24 @@ message InstanceInfo {
   float cpu_load = 4;
   string status = 5;
   int64 last_seen = 6;
+}
+
+message GetEventsRequest {
+  string event_type = 1;
+  int64 after_timestamp = 2;
+  int32 limit = 3;
+}
+
+message GetEventsResponse {
+  bool success = 1;
+  repeated SystemEvent events = 2;
+}
+
+message SystemEvent {
+  string id = 1;
+  string type = 2;
+  string message = 3;
+  map<string, string> metadata = 4;
+  int64 timestamp = 5;
 }
 
