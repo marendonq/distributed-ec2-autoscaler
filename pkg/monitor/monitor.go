@@ -11,6 +11,7 @@ import (
 
     "google.golang.org/grpc"
     "google.golang.org/grpc/credentials/insecure"
+    "google.golang.org/grpc/keepalive"
 
     "github.com/marendonq/distributed-ec2-autoscaler/config"
     "github.com/marendonq/distributed-ec2-autoscaler/internal/domain"
@@ -200,7 +201,12 @@ func StartGRPCServer(ctx context.Context, addr string, svc *service.MonitorServi
     if err != nil {
         return err
     }
-    srv := grpc.NewServer()
+    srv := grpc.NewServer(
+        grpc.KeepaliveParams(keepalive.ServerParameters{
+            Time:    30 * time.Second,
+            Timeout: 5 * time.Second,
+        }),
+    )
     pb.RegisterMonitorSServiceServer(srv, &monitorSServer{
         svc:      svc,
         eventSvc: eventSvc,
