@@ -14,8 +14,13 @@ Al arrancar, el sistema valida automáticamente que todos los campos críticos e
 | `max_instances` | int | Máximo de instancias activas. Limitado a 5 por cuenta AWS Academy. | 5 | No |
 | `region` | string | Región de AWS donde operar. | `us-east-1` | No |
 | `monitor_s_ip` | string | IP privada de la instancia donde corre MonitorS. | Placeholder | Sí |
-| `monitor_s_port` | int | Puerto gRPC donde escucha el MonitorS (Register/Deregister). | 50052 | No |
-| `monitor_c_port` | int | Puerto gRPC donde escucha el MonitorC (Ping/GetMetrics/Shutdown). | 50051 | No |
+| `monitor_s_port` | int | Puerto gRPC donde escucha el MonitorS (Register/Deregister). | 50051 | No |
+| `monitor_c_port` | int | Puerto gRPC donde escucha el MonitorC (Ping/GetMetrics/Shutdown). | 50052 | No |
+| `grpc_timeout_seconds` | int | Timeout de cada llamada gRPC de polling. | 3 | No |
+| `scale_up_threshold` | float | Umbral de scale-up (%). | 70 | No |
+| `scale_down_threshold` | float | Umbral de scale-down (%). | 30 | No |
+| `evaluation_window` | int | Muestras consecutivas requeridas para escalar. | 3 | No |
+| `cooldown_seconds` | int | Segundos de espera tras una acción de escalado. | 180 | No |
 | `heartbeat_check_interval_seconds` | int | Cada cuántos segundos el MonitorS hace polling a las instancias. | 10 | No |
 | `heartbeat_timeout_seconds` | int | Tras cuántos segundos sin respuesta una instancia se marca como inactiva. | 30 | No |
 
@@ -30,14 +35,19 @@ Al arrancar, el sistema valida automáticamente que todos los campos críticos e
 | `subnet_id` | string | ID de la subnet privada donde crear las instancias. | Placeholder | Sí |
 | `tags` | objeto | Tags asignados a cada instancia creada. Se usan para identificar instancias gestionadas por el ControllerASG. | `ManagedBy: ControllerASG, Project: ASG-Project2` | No |
 
+## Simulación de carga (`load_simulation`)
+
+| Campo | Default | Descripción |
+|-------|---------|-------------|
+| `min` | 10 | Carga mínima simulada (%) |
+| `max` | 90 | Carga máxima simulada (%) |
+| `period_seconds` | 120 | Período de la sinusoidal |
+| `noise_amplitude` | 5 | Magnitud del ruido ± |
+| `update_interval_seconds` | 5 | Frecuencia de actualización en MonitorC |
+
 ## Políticas de Escalamiento (`policies`)
 
-Actualmente vacío (`[]`). Está previsto para contener las políticas de scale-up y scale-down con los siguientes parámetros:
-
-- Umbral de scale-up (70%)
-- Umbral de scale-down (30%)
-- Ventana de evaluación (3 muestras consecutivas)
-- Cooldown entre acciones (180 segundos)
+Reservado para extensiones. Los umbrales y ventana se configuran en los campos de nivel raíz (`scale_up_threshold`, `scale_down_threshold`, `evaluation_window`, `cooldown_seconds`).
 
 ## Validación Automática
 

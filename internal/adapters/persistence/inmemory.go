@@ -2,6 +2,7 @@ package persistence
 
 import (
     "errors"
+    "strconv"
     "sync"
     "time"
 
@@ -36,9 +37,28 @@ func (r *InMemoryRegistry) Register(instance *domain.Instance) error {
         }
         return nil
     }
+    if instance.CreatedAt == 0 {
+        if instance.Meta != nil {
+            if v, ok := instance.Meta["created_at"]; ok {
+                if n, err := strconv.ParseInt(v, 10, 64); err == nil {
+                    instance.CreatedAt = n
+                }
+            }
+        }
+        if instance.CreatedAt == 0 {
+            instance.CreatedAt = now
+        }
+    }
     instance.LastSeen = now
     instance.Status = domain.StatusActive
     r.store[instance.ID] = instance
+    return nil
+}
+
+func (r *InMemoryRegistry) RecordMetric(instanceID string, load float32, timestamp int64) error {
+    _ = instanceID
+    _ = load
+    _ = timestamp
     return nil
 }
 
@@ -81,4 +101,38 @@ func (r *InMemoryRegistry) Delete(id string) error {
     }
     delete(r.store, id)
     return nil
+}
+
+func (r *InMemoryRegistry) GetAggregatedMetrics() (float32, int, int, error) {
+    var totalLoad float32 = 0
+    activeCount := 0
+    inactiveCount := 0
+
+    r.mu.RLock()
+    defer r.mu.RUnlock()
+
+    contributing := 0
+    for _, inst := range r.store {
+        if inst.Status != domain.StatusActive {
+            inactiveCount++
+            continue
+        }
+        activeCount++
+        if inst.ExcludedFromAvg() {
+            continue
+        }
+        if loadStr, ok := inst.Meta["cpu_load"]; ok {
+            if load, err := strconv.ParseFloat(loadStr, 32); err == nil {
+                totalLoad += float32(load)
+                contributing++
+            }
+        }
+    }
+
+    avgLoad := float32(0)
+    if contributing > 0 {
+        avgLoad = totalLoad / float32(contributing)
+    }
+
+    return avgLoad, activeCount, inactiveCount, nil
 }

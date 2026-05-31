@@ -9,12 +9,17 @@ service MonitorSService {
   // HU-01: Registro y Desregistro
   rpc Register (RegisterRequest) returns (RegisterResponse) {}
   rpc Deregister (DeregisterRequest) returns (DeregisterResponse) {}
+  rpc GetAggregatedMetrics (AggregatedMetricsRequest) returns (AggregatedMetricsResponse) {}
+  // HU-11: visualizacion de logs/eventos del sistema
+  rpc GetEvents (GetEventsRequest) returns (GetEventsResponse) {}
 }
 
 // Servicios expuestos por los Agentes (MonitorC)
 service MonitorCService {
   // HU-02: Verificación de vivacidad (Ping)
   rpc Ping (PingRequest) returns (PingResponse) {}
+  rpc GetMetrics (GetMetricsRequest) returns (GetMetricsResponse) {}
+  rpc Shutdown (ShutdownRequest) returns (ShutdownResponse) {}
 }
 
 message RegisterRequest {
@@ -44,3 +49,63 @@ message PingRequest {
 message PingResponse {
   bool success = 1;
 }
+
+// === NUEVO: GetMetrics ===
+message GetMetricsRequest {}
+
+message GetMetricsResponse {
+  bool success = 1;
+  float cpu_load = 2;     // Porcentaje 0.0-100.0
+  int64 timestamp = 3;
+  string instance_id = 4;
+}
+
+message ShutdownRequest {}
+
+message ShutdownResponse {
+  bool success = 1;
+  string instance_id = 2;
+}
+
+// === HU-15: Métricas Consolidadas ===
+message AggregatedMetricsRequest {}
+
+message AggregatedMetricsResponse {
+  bool success = 1;
+  float avg_cpu_load = 2;        // Promedio de carga CPU
+  int32 total_instances = 3;     // Total de instancias
+  int32 active_instances = 4;    // Instancias activas
+  int32 inactive_instances = 5;  // Instancias inactivas
+  repeated InstanceInfo instances = 6;  // Lista de instancias con sus métricas
+}
+
+message InstanceInfo {
+  string id = 1;
+  string hostname = 2;
+  string ip = 3;
+  float cpu_load = 4;
+  string status = 5;
+  int64 last_seen = 6;
+}
+
+message GetEventsRequest {
+  string event_type = 1;
+  string severity = 2;
+  int64 after_timestamp = 3;
+  int32 limit = 4;
+}
+
+message GetEventsResponse {
+  bool success = 1;
+  repeated SystemEvent events = 2;
+}
+
+message SystemEvent {
+  string id = 1;
+  string type = 2;
+  string severity = 3;
+  string message = 4;
+  map<string, string> metadata = 5;
+  int64 timestamp = 6;
+}
+

@@ -10,11 +10,19 @@ import (
 )
 
 func StartHTTPServer(ctx context.Context, svc *service.MonitorService, addr string) error {
-    h := NewHandler(svc)
+    return StartHTTPServerWithEventService(ctx, svc, nil, addr)
+}
+
+// HU-29: version con soporte para eventSvc
+func StartHTTPServerWithEventService(ctx context.Context, svc *service.MonitorService, eventSvc *service.EventService, addr string) error {
+    h := NewHandlerWithEventService(svc, eventSvc)
     mux := http.NewServeMux()
     mux.HandleFunc("/register", h.RegisterEndpoint)
     mux.HandleFunc("/heartbeat", h.HeartbeatEndpoint)
     mux.HandleFunc("/instances", h.ListEndpoint)
+    // HU-29: endpoints para eventos
+    mux.HandleFunc("/events", h.GetEvents)
+    mux.HandleFunc("/events/critical", h.GetCriticalEvents)
 
     srv := &http.Server{
         Addr:    addr,
@@ -29,6 +37,6 @@ func StartHTTPServer(ctx context.Context, svc *service.MonitorService, addr stri
         srv.Shutdown(ctxShutdown)
     }()
 
-    log.Printf("HTTP server listening on %s", addr)
+    log.Printf("[HU-29] HTTP server listening on %s", addr)
     return srv.ListenAndServe()
 }

@@ -1,0 +1,12 @@
+# Database files (generated at runtime)
+*.db
+
+# Binary files
+*.exe
+monitorc
+monitors
+events
+
+# Build artifacts
+/bin/
+/dist/
