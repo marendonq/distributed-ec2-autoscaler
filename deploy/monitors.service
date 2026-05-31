@@ -1,0 +1,15 @@
+[Unit]
+Description=MonitorS and ControllerASG
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/distributed-ec2-autoscaler
+ExecStart=/home/ubuntu/distributed-ec2-autoscaler/monitors
+EnvironmentFile=-/etc/autoscaler.env
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -9,4 +9,5 @@ type InstanceRegistry interface {
     MarkInactive(id string) error
     Delete(id string) error
     GetAggregatedMetrics() (avgLoad float32, activeCount int, inactiveCount int, err error)
+    RecordMetric(instanceID string, load float32, timestamp int64) error
 }

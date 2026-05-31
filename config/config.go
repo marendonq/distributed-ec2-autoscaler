@@ -23,18 +23,31 @@ type ScalingPolicy struct {
     Threshold int    `json:"threshold"`
 }
 
+type LoadSimulation struct {
+    Min                   float64 `json:"min"`
+    Max                   float64 `json:"max"`
+    PeriodSeconds         int     `json:"period_seconds"`
+    NoiseAmplitude        float64 `json:"noise_amplitude"`
+    UpdateIntervalSeconds int     `json:"update_interval_seconds"`
+}
+
 type Config struct {
     MinInstances int            `json:"min_instances"`
     MaxInstances int            `json:"max_instances"`
     EC2Params    EC2Params      `json:"ec2_params"`
     Policies     []ScalingPolicy `json:"policies"`
-    Region            string   `json:"region"` 
+    Region            string   `json:"region"`
     MonitorSIP      string   `json:"monitor_s_ip"`
     MonitorSPort    int   `json:"monitor_s_port"`
     MonitorCPort    int   `json:"monitor_c_port"`
-    // Heartbeat settings (seconds)
     HeartbeatCheckIntervalSeconds int `json:"heartbeat_check_interval_seconds"`
     HeartbeatTimeoutSeconds       int `json:"heartbeat_timeout_seconds"`
+    GRPCTimeoutSeconds            int `json:"grpc_timeout_seconds"`
+    ScaleUpThreshold              float64 `json:"scale_up_threshold"`
+    ScaleDownThreshold            float64 `json:"scale_down_threshold"`
+    EvaluationWindow              int     `json:"evaluation_window"`
+    CooldownSeconds               int     `json:"cooldown_seconds"`
+    LoadSimulation                LoadSimulation `json:"load_simulation"`
 }
 
 func DefaultConfig() *Config {
@@ -43,19 +56,34 @@ func DefaultConfig() *Config {
         MaxInstances: 5,
         Region: "us-east-1",
         MonitorSIP: "<MONITOR_S_PRIVATE_IP_ADDRESS>",
-        MonitorSPort: 50052,
-        MonitorCPort: 50051,
+        MonitorSPort: 50051,
+        MonitorCPort: 50052,
         EC2Params: EC2Params{
             AMI:            "REPLACE_WITH_AMI_ID",
             InstanceType:   "t2.micro",
             KeyName:        "",
             SecurityGroups: []string{},
             SubnetID:      "",
-            Tags:           map[string]string{}, 
+            Tags: map[string]string{
+                "ManagedBy": "ControllerASG",
+                "Project":   "ASG-Project2",
+            },
         },
         Policies: []ScalingPolicy{},
         HeartbeatCheckIntervalSeconds: 10,
         HeartbeatTimeoutSeconds:       30,
+        GRPCTimeoutSeconds:            3,
+        ScaleUpThreshold:              70,
+        ScaleDownThreshold:            30,
+        EvaluationWindow:              3,
+        CooldownSeconds:               180,
+        LoadSimulation: LoadSimulation{
+            Min:                   10,
+            Max:                   90,
+            PeriodSeconds:         120,
+            NoiseAmplitude:        5,
+            UpdateIntervalSeconds: 5,
+        },
     }
 }
 
@@ -91,6 +119,32 @@ func Validate(cfg *Config) error {
     if cfg.MaxInstances < cfg.MinInstances {
     return fmt.Errorf("MaxInstances must be >= MinInstances (%d), got %d", cfg.MinInstances, cfg.MaxInstances)
 }
+
+    if cfg.EvaluationWindow < 1 {
+        cfg.EvaluationWindow = 3
+    }
+    if cfg.CooldownSeconds < 0 {
+        cfg.CooldownSeconds = 180
+    }
+    if cfg.GRPCTimeoutSeconds <= 0 {
+        cfg.GRPCTimeoutSeconds = 3
+    }
+    if cfg.ScaleUpThreshold <= 0 {
+        cfg.ScaleUpThreshold = 70
+    }
+    if cfg.ScaleDownThreshold <= 0 {
+        cfg.ScaleDownThreshold = 30
+    }
+    if cfg.LoadSimulation.UpdateIntervalSeconds <= 0 {
+        cfg.LoadSimulation.UpdateIntervalSeconds = 5
+    }
+    if cfg.LoadSimulation.PeriodSeconds <= 0 {
+        cfg.LoadSimulation.PeriodSeconds = 120
+    }
+    if cfg.LoadSimulation.Max <= cfg.LoadSimulation.Min {
+        cfg.LoadSimulation.Min = 10
+        cfg.LoadSimulation.Max = 90
+    }
 
     return nil
 }
@@ -152,6 +206,41 @@ func ApplyEnvOverrides(cfg *Config) error {
             return fmt.Errorf("AUTOSCALER_HEARTBEAT_TIMEOUT_SECONDS invalid: %w", err)
         } else {
             cfg.HeartbeatTimeoutSeconds = n
+        }
+    }
+    if v := os.Getenv("AUTOSCALER_GRPC_TIMEOUT_SECONDS"); v != "" {
+        if n, err := strconv.Atoi(v); err != nil {
+            return fmt.Errorf("AUTOSCALER_GRPC_TIMEOUT_SECONDS invalid: %w", err)
+        } else {
+            cfg.GRPCTimeoutSeconds = n
+        }
+    }
+    if v := os.Getenv("AUTOSCALER_SCALE_UP_THRESHOLD"); v != "" {
+        if n, err := strconv.ParseFloat(v, 64); err != nil {
+            return fmt.Errorf("AUTOSCALER_SCALE_UP_THRESHOLD invalid: %w", err)
+        } else {
+            cfg.ScaleUpThreshold = n
+        }
+    }
+    if v := os.Getenv("AUTOSCALER_SCALE_DOWN_THRESHOLD"); v != "" {
+        if n, err := strconv.ParseFloat(v, 64); err != nil {
+            return fmt.Errorf("AUTOSCALER_SCALE_DOWN_THRESHOLD invalid: %w", err)
+        } else {
+            cfg.ScaleDownThreshold = n
+        }
+    }
+    if v := os.Getenv("AUTOSCALER_EVALUATION_WINDOW"); v != "" {
+        if n, err := strconv.Atoi(v); err != nil {
+            return fmt.Errorf("AUTOSCALER_EVALUATION_WINDOW invalid: %w", err)
+        } else {
+            cfg.EvaluationWindow = n
+        }
+    }
+    if v := os.Getenv("AUTOSCALER_COOLDOWN_SECONDS"); v != "" {
+        if n, err := strconv.Atoi(v); err != nil {
+            return fmt.Errorf("AUTOSCALER_COOLDOWN_SECONDS invalid: %w", err)
+        } else {
+            cfg.CooldownSeconds = n
         }
     }
     // AUTOSCALER_EC2_AMI

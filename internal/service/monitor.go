@@ -43,3 +43,7 @@ func (s *MonitorService) GetEvents(filter map[string]string) ([]*domain.SystemEv
     }
     return s.EventSvc.GetEvents(filter)
 }
+
+func (s *MonitorService) RecordMetric(instanceID string, load float32, timestamp int64) error {
+    return s.registry.RecordMetric(instanceID, load, timestamp)
+}

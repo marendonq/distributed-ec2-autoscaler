@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.34.1
-// source: api/proto/monitor/monitor.proto
+// source: monitor.proto
 
 package monitor
 
@@ -34,7 +34,7 @@ type RegisterRequest struct {
 
 func (x *RegisterRequest) Reset() {
 	*x = RegisterRequest{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[0]
+	mi := &file_monitor_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +46,7 @@ func (x *RegisterRequest) String() string {
 func (*RegisterRequest) ProtoMessage() {}
 
 func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[0]
+	mi := &file_monitor_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +59,7 @@ func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterRequest.ProtoReflect.Descriptor instead.
 func (*RegisterRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{0}
+	return file_monitor_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *RegisterRequest) GetInstanceId() string {
@@ -107,7 +107,7 @@ type RegisterResponse struct {
 
 func (x *RegisterResponse) Reset() {
 	*x = RegisterResponse{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[1]
+	mi := &file_monitor_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -119,7 +119,7 @@ func (x *RegisterResponse) String() string {
 func (*RegisterResponse) ProtoMessage() {}
 
 func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[1]
+	mi := &file_monitor_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -132,7 +132,7 @@ func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterResponse.ProtoReflect.Descriptor instead.
 func (*RegisterResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{1}
+	return file_monitor_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *RegisterResponse) GetSuccess() bool {
@@ -158,7 +158,7 @@ type DeregisterRequest struct {
 
 func (x *DeregisterRequest) Reset() {
 	*x = DeregisterRequest{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[2]
+	mi := &file_monitor_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -170,7 +170,7 @@ func (x *DeregisterRequest) String() string {
 func (*DeregisterRequest) ProtoMessage() {}
 
 func (x *DeregisterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[2]
+	mi := &file_monitor_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -183,7 +183,7 @@ func (x *DeregisterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeregisterRequest.ProtoReflect.Descriptor instead.
 func (*DeregisterRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{2}
+	return file_monitor_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *DeregisterRequest) GetInstanceId() string {
@@ -202,7 +202,7 @@ type DeregisterResponse struct {
 
 func (x *DeregisterResponse) Reset() {
 	*x = DeregisterResponse{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[3]
+	mi := &file_monitor_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -214,7 +214,7 @@ func (x *DeregisterResponse) String() string {
 func (*DeregisterResponse) ProtoMessage() {}
 
 func (x *DeregisterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[3]
+	mi := &file_monitor_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -227,7 +227,7 @@ func (x *DeregisterResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeregisterResponse.ProtoReflect.Descriptor instead.
 func (*DeregisterResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{3}
+	return file_monitor_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *DeregisterResponse) GetSuccess() bool {
@@ -245,7 +245,7 @@ type PingRequest struct {
 
 func (x *PingRequest) Reset() {
 	*x = PingRequest{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[4]
+	mi := &file_monitor_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -257,7 +257,7 @@ func (x *PingRequest) String() string {
 func (*PingRequest) ProtoMessage() {}
 
 func (x *PingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[4]
+	mi := &file_monitor_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -270,7 +270,7 @@ func (x *PingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingRequest.ProtoReflect.Descriptor instead.
 func (*PingRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{4}
+	return file_monitor_proto_rawDescGZIP(), []int{4}
 }
 
 type PingResponse struct {
@@ -282,7 +282,7 @@ type PingResponse struct {
 
 func (x *PingResponse) Reset() {
 	*x = PingResponse{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[5]
+	mi := &file_monitor_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -294,7 +294,7 @@ func (x *PingResponse) String() string {
 func (*PingResponse) ProtoMessage() {}
 
 func (x *PingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[5]
+	mi := &file_monitor_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -307,7 +307,7 @@ func (x *PingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingResponse.ProtoReflect.Descriptor instead.
 func (*PingResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{5}
+	return file_monitor_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PingResponse) GetSuccess() bool {
@@ -326,7 +326,7 @@ type GetMetricsRequest struct {
 
 func (x *GetMetricsRequest) Reset() {
 	*x = GetMetricsRequest{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[6]
+	mi := &file_monitor_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -338,7 +338,7 @@ func (x *GetMetricsRequest) String() string {
 func (*GetMetricsRequest) ProtoMessage() {}
 
 func (x *GetMetricsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[6]
+	mi := &file_monitor_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -351,7 +351,7 @@ func (x *GetMetricsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMetricsRequest.ProtoReflect.Descriptor instead.
 func (*GetMetricsRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{6}
+	return file_monitor_proto_rawDescGZIP(), []int{6}
 }
 
 type GetMetricsResponse struct {
@@ -359,13 +359,14 @@ type GetMetricsResponse struct {
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	CpuLoad       float32                `protobuf:"fixed32,2,opt,name=cpu_load,json=cpuLoad,proto3" json:"cpu_load,omitempty"` // Porcentaje 0.0-100.0
 	Timestamp     int64                  `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	InstanceId    string                 `protobuf:"bytes,4,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetMetricsResponse) Reset() {
 	*x = GetMetricsResponse{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[7]
+	mi := &file_monitor_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -377,7 +378,7 @@ func (x *GetMetricsResponse) String() string {
 func (*GetMetricsResponse) ProtoMessage() {}
 
 func (x *GetMetricsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[7]
+	mi := &file_monitor_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -390,7 +391,7 @@ func (x *GetMetricsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMetricsResponse.ProtoReflect.Descriptor instead.
 func (*GetMetricsResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{7}
+	return file_monitor_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetMetricsResponse) GetSuccess() bool {
@@ -414,6 +415,101 @@ func (x *GetMetricsResponse) GetTimestamp() int64 {
 	return 0
 }
 
+func (x *GetMetricsResponse) GetInstanceId() string {
+	if x != nil {
+		return x.InstanceId
+	}
+	return ""
+}
+
+type ShutdownRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ShutdownRequest) Reset() {
+	*x = ShutdownRequest{}
+	mi := &file_monitor_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ShutdownRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ShutdownRequest) ProtoMessage() {}
+
+func (x *ShutdownRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_monitor_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ShutdownRequest.ProtoReflect.Descriptor instead.
+func (*ShutdownRequest) Descriptor() ([]byte, []int) {
+	return file_monitor_proto_rawDescGZIP(), []int{8}
+}
+
+type ShutdownResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	InstanceId    string                 `protobuf:"bytes,2,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ShutdownResponse) Reset() {
+	*x = ShutdownResponse{}
+	mi := &file_monitor_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ShutdownResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ShutdownResponse) ProtoMessage() {}
+
+func (x *ShutdownResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_monitor_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ShutdownResponse.ProtoReflect.Descriptor instead.
+func (*ShutdownResponse) Descriptor() ([]byte, []int) {
+	return file_monitor_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ShutdownResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ShutdownResponse) GetInstanceId() string {
+	if x != nil {
+		return x.InstanceId
+	}
+	return ""
+}
+
 // === HU-15: Métricas Consolidadas ===
 type AggregatedMetricsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -423,7 +519,7 @@ type AggregatedMetricsRequest struct {
 
 func (x *AggregatedMetricsRequest) Reset() {
 	*x = AggregatedMetricsRequest{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[8]
+	mi := &file_monitor_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -435,7 +531,7 @@ func (x *AggregatedMetricsRequest) String() string {
 func (*AggregatedMetricsRequest) ProtoMessage() {}
 
 func (x *AggregatedMetricsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[8]
+	mi := &file_monitor_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -448,7 +544,7 @@ func (x *AggregatedMetricsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AggregatedMetricsRequest.ProtoReflect.Descriptor instead.
 func (*AggregatedMetricsRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{8}
+	return file_monitor_proto_rawDescGZIP(), []int{10}
 }
 
 type AggregatedMetricsResponse struct {
@@ -465,7 +561,7 @@ type AggregatedMetricsResponse struct {
 
 func (x *AggregatedMetricsResponse) Reset() {
 	*x = AggregatedMetricsResponse{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[9]
+	mi := &file_monitor_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -477,7 +573,7 @@ func (x *AggregatedMetricsResponse) String() string {
 func (*AggregatedMetricsResponse) ProtoMessage() {}
 
 func (x *AggregatedMetricsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[9]
+	mi := &file_monitor_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -490,7 +586,7 @@ func (x *AggregatedMetricsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AggregatedMetricsResponse.ProtoReflect.Descriptor instead.
 func (*AggregatedMetricsResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{9}
+	return file_monitor_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *AggregatedMetricsResponse) GetSuccess() bool {
@@ -549,7 +645,7 @@ type InstanceInfo struct {
 
 func (x *InstanceInfo) Reset() {
 	*x = InstanceInfo{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[10]
+	mi := &file_monitor_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -561,7 +657,7 @@ func (x *InstanceInfo) String() string {
 func (*InstanceInfo) ProtoMessage() {}
 
 func (x *InstanceInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[10]
+	mi := &file_monitor_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -574,7 +670,7 @@ func (x *InstanceInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InstanceInfo.ProtoReflect.Descriptor instead.
 func (*InstanceInfo) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{10}
+	return file_monitor_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *InstanceInfo) GetId() string {
@@ -631,7 +727,7 @@ type GetEventsRequest struct {
 
 func (x *GetEventsRequest) Reset() {
 	*x = GetEventsRequest{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[11]
+	mi := &file_monitor_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -643,7 +739,7 @@ func (x *GetEventsRequest) String() string {
 func (*GetEventsRequest) ProtoMessage() {}
 
 func (x *GetEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[11]
+	mi := &file_monitor_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -656,7 +752,7 @@ func (x *GetEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEventsRequest.ProtoReflect.Descriptor instead.
 func (*GetEventsRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{11}
+	return file_monitor_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetEventsRequest) GetEventType() string {
@@ -697,7 +793,7 @@ type GetEventsResponse struct {
 
 func (x *GetEventsResponse) Reset() {
 	*x = GetEventsResponse{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[12]
+	mi := &file_monitor_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -709,7 +805,7 @@ func (x *GetEventsResponse) String() string {
 func (*GetEventsResponse) ProtoMessage() {}
 
 func (x *GetEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[12]
+	mi := &file_monitor_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -722,7 +818,7 @@ func (x *GetEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEventsResponse.ProtoReflect.Descriptor instead.
 func (*GetEventsResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{12}
+	return file_monitor_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetEventsResponse) GetSuccess() bool {
@@ -753,7 +849,7 @@ type SystemEvent struct {
 
 func (x *SystemEvent) Reset() {
 	*x = SystemEvent{}
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[13]
+	mi := &file_monitor_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -765,7 +861,7 @@ func (x *SystemEvent) String() string {
 func (*SystemEvent) ProtoMessage() {}
 
 func (x *SystemEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_monitor_monitor_proto_msgTypes[13]
+	mi := &file_monitor_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -778,7 +874,7 @@ func (x *SystemEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SystemEvent.ProtoReflect.Descriptor instead.
 func (*SystemEvent) Descriptor() ([]byte, []int) {
-	return file_api_proto_monitor_monitor_proto_rawDescGZIP(), []int{13}
+	return file_monitor_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *SystemEvent) GetId() string {
@@ -823,11 +919,11 @@ func (x *SystemEvent) GetTimestamp() int64 {
 	return 0
 }
 
-var File_api_proto_monitor_monitor_proto protoreflect.FileDescriptor
+var File_monitor_proto protoreflect.FileDescriptor
 
-const file_api_proto_monitor_monitor_proto_rawDesc = "" +
+const file_monitor_proto_rawDesc = "" +
 	"\n" +
-	"\x1fapi/proto/monitor/monitor.proto\x12\amonitor\"\xf7\x01\n" +
+	"\rmonitor.proto\x12\amonitor\"\xf7\x01\n" +
 	"\x0fRegisterRequest\x12\x1f\n" +
 	"\vinstance_id\x18\x01 \x01(\tR\n" +
 	"instanceId\x12\x1a\n" +
@@ -849,11 +945,18 @@ const file_api_proto_monitor_monitor_proto_rawDesc = "" +
 	"\vPingRequest\"(\n" +
 	"\fPingResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x13\n" +
-	"\x11GetMetricsRequest\"g\n" +
+	"\x11GetMetricsRequest\"\x88\x01\n" +
 	"\x12GetMetricsResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x19\n" +
 	"\bcpu_load\x18\x02 \x01(\x02R\acpuLoad\x12\x1c\n" +
-	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\"\x1a\n" +
+	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\x12\x1f\n" +
+	"\vinstance_id\x18\x04 \x01(\tR\n" +
+	"instanceId\"\x11\n" +
+	"\x0fShutdownRequest\"M\n" +
+	"\x10ShutdownResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1f\n" +
+	"\vinstance_id\x18\x02 \x01(\tR\n" +
+	"instanceId\"\x1a\n" +
 	"\x18AggregatedMetricsRequest\"\x8f\x02\n" +
 	"\x19AggregatedMetricsResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12 \n" +
@@ -894,26 +997,27 @@ const file_api_proto_monitor_monitor_proto_rawDesc = "" +
 	"\n" +
 	"Deregister\x12\x1a.monitor.DeregisterRequest\x1a\x1b.monitor.DeregisterResponse\"\x00\x12_\n" +
 	"\x14GetAggregatedMetrics\x12!.monitor.AggregatedMetricsRequest\x1a\".monitor.AggregatedMetricsResponse\"\x00\x12D\n" +
-	"\tGetEvents\x12\x19.monitor.GetEventsRequest\x1a\x1a.monitor.GetEventsResponse\"\x002\x91\x01\n" +
+	"\tGetEvents\x12\x19.monitor.GetEventsRequest\x1a\x1a.monitor.GetEventsResponse\"\x002\xd4\x01\n" +
 	"\x0fMonitorCService\x125\n" +
 	"\x04Ping\x12\x14.monitor.PingRequest\x1a\x15.monitor.PingResponse\"\x00\x12G\n" +
 	"\n" +
-	"GetMetrics\x12\x1a.monitor.GetMetricsRequest\x1a\x1b.monitor.GetMetricsResponse\"\x00BCZAgithub.com/marendonq/distributed-ec2-autoscaler/api/proto/monitorb\x06proto3"
+	"GetMetrics\x12\x1a.monitor.GetMetricsRequest\x1a\x1b.monitor.GetMetricsResponse\"\x00\x12A\n" +
+	"\bShutdown\x12\x18.monitor.ShutdownRequest\x1a\x19.monitor.ShutdownResponse\"\x00BCZAgithub.com/marendonq/distributed-ec2-autoscaler/api/proto/monitorb\x06proto3"
 
 var (
-	file_api_proto_monitor_monitor_proto_rawDescOnce sync.Once
-	file_api_proto_monitor_monitor_proto_rawDescData []byte
+	file_monitor_proto_rawDescOnce sync.Once
+	file_monitor_proto_rawDescData []byte
 )
 
-func file_api_proto_monitor_monitor_proto_rawDescGZIP() []byte {
-	file_api_proto_monitor_monitor_proto_rawDescOnce.Do(func() {
-		file_api_proto_monitor_monitor_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_proto_monitor_monitor_proto_rawDesc), len(file_api_proto_monitor_monitor_proto_rawDesc)))
+func file_monitor_proto_rawDescGZIP() []byte {
+	file_monitor_proto_rawDescOnce.Do(func() {
+		file_monitor_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_monitor_proto_rawDesc), len(file_monitor_proto_rawDesc)))
 	})
-	return file_api_proto_monitor_monitor_proto_rawDescData
+	return file_monitor_proto_rawDescData
 }
 
-var file_api_proto_monitor_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
-var file_api_proto_monitor_monitor_proto_goTypes = []any{
+var file_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_monitor_proto_goTypes = []any{
 	(*RegisterRequest)(nil),           // 0: monitor.RegisterRequest
 	(*RegisterResponse)(nil),          // 1: monitor.RegisterResponse
 	(*DeregisterRequest)(nil),         // 2: monitor.DeregisterRequest
@@ -922,59 +1026,63 @@ var file_api_proto_monitor_monitor_proto_goTypes = []any{
 	(*PingResponse)(nil),              // 5: monitor.PingResponse
 	(*GetMetricsRequest)(nil),         // 6: monitor.GetMetricsRequest
 	(*GetMetricsResponse)(nil),        // 7: monitor.GetMetricsResponse
-	(*AggregatedMetricsRequest)(nil),  // 8: monitor.AggregatedMetricsRequest
-	(*AggregatedMetricsResponse)(nil), // 9: monitor.AggregatedMetricsResponse
-	(*InstanceInfo)(nil),              // 10: monitor.InstanceInfo
-	(*GetEventsRequest)(nil),          // 11: monitor.GetEventsRequest
-	(*GetEventsResponse)(nil),         // 12: monitor.GetEventsResponse
-	(*SystemEvent)(nil),               // 13: monitor.SystemEvent
-	nil,                               // 14: monitor.RegisterRequest.MetaEntry
-	nil,                               // 15: monitor.SystemEvent.MetadataEntry
+	(*ShutdownRequest)(nil),           // 8: monitor.ShutdownRequest
+	(*ShutdownResponse)(nil),          // 9: monitor.ShutdownResponse
+	(*AggregatedMetricsRequest)(nil),  // 10: monitor.AggregatedMetricsRequest
+	(*AggregatedMetricsResponse)(nil), // 11: monitor.AggregatedMetricsResponse
+	(*InstanceInfo)(nil),              // 12: monitor.InstanceInfo
+	(*GetEventsRequest)(nil),          // 13: monitor.GetEventsRequest
+	(*GetEventsResponse)(nil),         // 14: monitor.GetEventsResponse
+	(*SystemEvent)(nil),               // 15: monitor.SystemEvent
+	nil,                               // 16: monitor.RegisterRequest.MetaEntry
+	nil,                               // 17: monitor.SystemEvent.MetadataEntry
 }
-var file_api_proto_monitor_monitor_proto_depIdxs = []int32{
-	14, // 0: monitor.RegisterRequest.meta:type_name -> monitor.RegisterRequest.MetaEntry
-	10, // 1: monitor.AggregatedMetricsResponse.instances:type_name -> monitor.InstanceInfo
-	13, // 2: monitor.GetEventsResponse.events:type_name -> monitor.SystemEvent
-	15, // 3: monitor.SystemEvent.metadata:type_name -> monitor.SystemEvent.MetadataEntry
+var file_monitor_proto_depIdxs = []int32{
+	16, // 0: monitor.RegisterRequest.meta:type_name -> monitor.RegisterRequest.MetaEntry
+	12, // 1: monitor.AggregatedMetricsResponse.instances:type_name -> monitor.InstanceInfo
+	15, // 2: monitor.GetEventsResponse.events:type_name -> monitor.SystemEvent
+	17, // 3: monitor.SystemEvent.metadata:type_name -> monitor.SystemEvent.MetadataEntry
 	0,  // 4: monitor.MonitorSService.Register:input_type -> monitor.RegisterRequest
 	2,  // 5: monitor.MonitorSService.Deregister:input_type -> monitor.DeregisterRequest
-	8,  // 6: monitor.MonitorSService.GetAggregatedMetrics:input_type -> monitor.AggregatedMetricsRequest
-	11, // 7: monitor.MonitorSService.GetEvents:input_type -> monitor.GetEventsRequest
+	10, // 6: monitor.MonitorSService.GetAggregatedMetrics:input_type -> monitor.AggregatedMetricsRequest
+	13, // 7: monitor.MonitorSService.GetEvents:input_type -> monitor.GetEventsRequest
 	4,  // 8: monitor.MonitorCService.Ping:input_type -> monitor.PingRequest
 	6,  // 9: monitor.MonitorCService.GetMetrics:input_type -> monitor.GetMetricsRequest
-	1,  // 10: monitor.MonitorSService.Register:output_type -> monitor.RegisterResponse
-	3,  // 11: monitor.MonitorSService.Deregister:output_type -> monitor.DeregisterResponse
-	9,  // 12: monitor.MonitorSService.GetAggregatedMetrics:output_type -> monitor.AggregatedMetricsResponse
-	12, // 13: monitor.MonitorSService.GetEvents:output_type -> monitor.GetEventsResponse
-	5,  // 14: monitor.MonitorCService.Ping:output_type -> monitor.PingResponse
-	7,  // 15: monitor.MonitorCService.GetMetrics:output_type -> monitor.GetMetricsResponse
-	10, // [10:16] is the sub-list for method output_type
-	4,  // [4:10] is the sub-list for method input_type
+	8,  // 10: monitor.MonitorCService.Shutdown:input_type -> monitor.ShutdownRequest
+	1,  // 11: monitor.MonitorSService.Register:output_type -> monitor.RegisterResponse
+	3,  // 12: monitor.MonitorSService.Deregister:output_type -> monitor.DeregisterResponse
+	11, // 13: monitor.MonitorSService.GetAggregatedMetrics:output_type -> monitor.AggregatedMetricsResponse
+	14, // 14: monitor.MonitorSService.GetEvents:output_type -> monitor.GetEventsResponse
+	5,  // 15: monitor.MonitorCService.Ping:output_type -> monitor.PingResponse
+	7,  // 16: monitor.MonitorCService.GetMetrics:output_type -> monitor.GetMetricsResponse
+	9,  // 17: monitor.MonitorCService.Shutdown:output_type -> monitor.ShutdownResponse
+	11, // [11:18] is the sub-list for method output_type
+	4,  // [4:11] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name
 	4,  // [4:4] is the sub-list for extension extendee
 	0,  // [0:4] is the sub-list for field type_name
 }
 
-func init() { file_api_proto_monitor_monitor_proto_init() }
-func file_api_proto_monitor_monitor_proto_init() {
-	if File_api_proto_monitor_monitor_proto != nil {
+func init() { file_monitor_proto_init() }
+func file_monitor_proto_init() {
+	if File_monitor_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_monitor_monitor_proto_rawDesc), len(file_api_proto_monitor_monitor_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_monitor_proto_rawDesc), len(file_monitor_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_api_proto_monitor_monitor_proto_goTypes,
-		DependencyIndexes: file_api_proto_monitor_monitor_proto_depIdxs,
-		MessageInfos:      file_api_proto_monitor_monitor_proto_msgTypes,
+		GoTypes:           file_monitor_proto_goTypes,
+		DependencyIndexes: file_monitor_proto_depIdxs,
+		MessageInfos:      file_monitor_proto_msgTypes,
 	}.Build()
-	File_api_proto_monitor_monitor_proto = out.File
-	file_api_proto_monitor_monitor_proto_goTypes = nil
-	file_api_proto_monitor_monitor_proto_depIdxs = nil
+	File_monitor_proto = out.File
+	file_monitor_proto_goTypes = nil
+	file_monitor_proto_depIdxs = nil
 }

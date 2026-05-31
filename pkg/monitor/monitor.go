@@ -88,23 +88,28 @@ func (s *monitorSServer) GetAggregatedMetrics(ctx context.Context, req *pb.Aggre
     var totalLoad float32 = 0
     activeCount := 0
     inactiveCount := 0
-    
+    contributing := 0
+
     for _, inst := range instances {
-        if inst.Status == domain.StatusActive {
-            activeCount++
-            if loadStr, ok := inst.Meta["cpu_load"]; ok {
-                if load, err := strconv.ParseFloat(loadStr, 32); err == nil {
-                    totalLoad += float32(load)
-                }
-            }
-        } else {
+        if inst.Status != domain.StatusActive {
             inactiveCount++
+            continue
+        }
+        activeCount++
+        if inst.ExcludedFromAvg() {
+            continue
+        }
+        if loadStr, ok := inst.Meta["cpu_load"]; ok {
+            if load, err := strconv.ParseFloat(loadStr, 32); err == nil {
+                totalLoad += float32(load)
+                contributing++
+            }
         }
     }
 
     avgLoad := float32(0)
-    if activeCount > 0 {
-        avgLoad = totalLoad / float32(activeCount)
+    if contributing > 0 {
+        avgLoad = totalLoad / float32(contributing)
     }
 
     // Construir lista de instancias
@@ -221,118 +226,159 @@ func StartGRPCServer(ctx context.Context, addr string, svc *service.MonitorServi
     return srv.Serve(lis)
 }
 
-// StartSchedulers launches background periodic tasks to poll MonitorC agents.
-func StartSchedulers(ctx context.Context, cfg *config.Config, svc interface{ 
-    ListInstances() ([]*domain.Instance, error)
-    RegisterInstance(*domain.Instance) error
-    MarkInactive(string) error 
-}, eventSvc *service.EventService) {
-    interval := time.Duration(cfg.HeartbeatCheckIntervalSeconds) * time.Second
-    if interval <= 0 {
-        interval = 10 * time.Second // Word doc suggests 10s
-    }
-    ticker := time.NewTicker(interval)
-    
-    go func() {
-        defer ticker.Stop()
-        for {
-            select {
-            case <-ctx.Done():
-                log.Println("schedulers stopped")
-                return
-            case <-ticker.C:
-                instances, err := svc.ListInstances()
-                if err != nil {
-                    log.Printf("scheduler: failed to list instances: %v", err)
-                    continue
-                }
-                
-                var wg sync.WaitGroup
-                for _, inst := range instances {
-                    if inst.Status != domain.StatusActive {
-                        continue
-                    }
-                    wg.Add(1)
-                    go func(instance *domain.Instance) {
-                        defer wg.Done()
-                        pollInstance(instance, svc, eventSvc)
-                    }(inst)
-                }
-                wg.Wait()
-            }
-        }
-    }()
+// DeadInstanceHandler is invoked after consecutive poll failures declare an instance dead.
+type DeadInstanceHandler func(ctx context.Context, inst *domain.Instance) error
+
+// SchedulerOpts configures MonitorS polling behavior.
+type SchedulerOpts struct {
+	GRPCTimeout      time.Duration
+	MaxFailures      int
+	OnDeadInstance   DeadInstanceHandler
 }
 
-func pollInstance(inst *domain.Instance, svc interface{ RegisterInstance(*domain.Instance) error; MarkInactive(string) error }, eventSvc *service.EventService) {
-    port := inst.Meta["grpc_port"]
-    if port == "" {
-        port = "50052" // default MonitorC port
-    }
-    target := fmt.Sprintf("%s:%s", inst.IP, port)
-    
-    // Configurar timeout corto para no bloquear (3s según Word doc)
-    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-    defer cancel()
-    
-    conn, err := grpc.DialContext(ctx, target, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-    
-    success := false
-    
-    if err == nil {
-        client := pb.NewMonitorCServiceClient(conn)
-        // 1. Ping
-        _, errPing := client.Ping(ctx, &pb.PingRequest{})
-        if errPing == nil {
-            success = true
-            
-            // 2. HU-03: Obtener métricas de CPU
-            metricsResp, errMetrics := client.GetMetrics(ctx, &pb.GetMetricsRequest{})
-            if errMetrics == nil && metricsResp.Success {
-                inst.Meta["cpu_load"] = fmt.Sprintf("%.2f", metricsResp.CpuLoad)
-            }
-        } else {
-            err = errPing
-        }
-        conn.Close()
-    }
+// StartSchedulers launches background periodic tasks to poll MonitorC agents.
+func StartSchedulers(ctx context.Context, cfg *config.Config, svc interface {
+	ListInstances() ([]*domain.Instance, error)
+	RegisterInstance(*domain.Instance) error
+	RecordMetric(instanceID string, load float32, timestamp int64) error
+}, eventSvc *service.EventService, opts SchedulerOpts) {
+	interval := time.Duration(cfg.HeartbeatCheckIntervalSeconds) * time.Second
+	if interval <= 0 {
+		interval = 10 * time.Second
+	}
+	if opts.GRPCTimeout <= 0 {
+		opts.GRPCTimeout = time.Duration(cfg.GRPCTimeoutSeconds) * time.Second
+	}
+	if opts.GRPCTimeout <= 0 {
+		opts.GRPCTimeout = 3 * time.Second
+	}
+	if opts.MaxFailures <= 0 {
+		opts.MaxFailures = 3
+	}
+	defaultPort := cfg.MonitorCPort
+	if defaultPort <= 0 {
+		defaultPort = 50052
+	}
 
-    // Manejo de fallos o éxitos
-    failures, _ := strconv.Atoi(inst.Meta["failures"])
-    
-    if success {
-        inst.LastSeen = time.Now().Unix()
-        inst.Meta["failures"] = "0"
-        svc.RegisterInstance(inst) // Actualizar datos
-    } else {
-        // HU-11: registrar fallo de conexion al hacer poll
-        if eventSvc != nil {
-            // HU-29: clasificar severidad del evento
-            eventSvc.RecordEvent(domain.NewSystemEvent(
-                domain.EventFailure,
-                domain.SeverityCritical,
-                fmt.Sprintf("Poll failed for %s: %v", inst.ID, err),
-                map[string]string{"instance_id": inst.ID, "host": inst.IP},
-            ))
-        }
+	ticker := time.NewTicker(interval)
 
-        failures++
-        inst.Meta["failures"] = fmt.Sprintf("%d", failures)
-        if failures >= 3 {
-            log.Printf("scheduler: marking %s inactive after 3 consecutive failures", inst.ID)
-            svc.MarkInactive(inst.ID)
-            // HU-11: registrar cuando el scheduler marca una instancia inactiva
-            if eventSvc != nil {
-                // HU-29: clasificar severidad del evento
-                eventSvc.RecordEvent(domain.NewSystemEvent(
-                    domain.EventInstanceMarkedInactive,
-                    domain.SeverityWarning,
-                    fmt.Sprintf("Instance %s marked inactive after consecutive failures", inst.ID),
-                    map[string]string{"instance_id": inst.ID, "failures": inst.Meta["failures"]},
-                ))
-            }
-        } else {
-            svc.RegisterInstance(inst) // Actualizar conteo de fallos
-        }
-    }
+	go func() {
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				log.Println("schedulers stopped")
+				return
+			case <-ticker.C:
+				instances, err := svc.ListInstances()
+				if err != nil {
+					log.Printf("scheduler: failed to list instances: %v", err)
+					continue
+				}
+
+				var wg sync.WaitGroup
+				for _, inst := range instances {
+					if inst.Status != domain.StatusActive {
+						continue
+					}
+					wg.Add(1)
+					go func(instance *domain.Instance) {
+						defer wg.Done()
+						pollInstance(ctx, instance, svc, eventSvc, opts, defaultPort)
+					}(inst)
+				}
+				wg.Wait()
+			}
+		}
+	}()
+}
+
+func pollInstance(ctx context.Context, inst *domain.Instance, svc interface {
+	RegisterInstance(*domain.Instance) error
+	RecordMetric(instanceID string, load float32, timestamp int64) error
+}, eventSvc *service.EventService, opts SchedulerOpts, defaultPort int) {
+	if inst.Meta == nil {
+		inst.Meta = make(map[string]string)
+	}
+	port := inst.Meta["grpc_port"]
+	if port == "" {
+		port = fmt.Sprintf("%d", defaultPort)
+	}
+	target := fmt.Sprintf("%s:%s", inst.IP, port)
+
+	pollCtx, cancel := context.WithTimeout(ctx, opts.GRPCTimeout)
+	defer cancel()
+
+	conn, err := grpc.DialContext(pollCtx, target, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+
+	success := false
+	var pollErr error
+
+	if err == nil {
+		client := pb.NewMonitorCServiceClient(conn)
+		_, errPing := client.Ping(pollCtx, &pb.PingRequest{})
+		if errPing == nil {
+			metricsResp, errMetrics := client.GetMetrics(pollCtx, &pb.GetMetricsRequest{})
+			if errMetrics == nil && metricsResp.Success {
+				if metricsResp.InstanceId != "" && metricsResp.InstanceId != inst.ID {
+					pollErr = fmt.Errorf("instance_id mismatch: expected %s, got %s", inst.ID, metricsResp.InstanceId)
+				} else {
+					success = true
+					inst.Meta["cpu_load"] = fmt.Sprintf("%.2f", metricsResp.CpuLoad)
+					_ = svc.RecordMetric(inst.ID, metricsResp.CpuLoad, metricsResp.Timestamp)
+				}
+			} else {
+				pollErr = errMetrics
+			}
+		} else {
+			pollErr = errPing
+		}
+		conn.Close()
+	} else {
+		pollErr = err
+	}
+
+	failures, _ := strconv.Atoi(inst.Meta["failures"])
+
+	if success {
+		inst.LastSeen = time.Now().Unix()
+		inst.Meta["failures"] = "0"
+		delete(inst.Meta, "excluded_from_avg")
+		_ = svc.RegisterInstance(inst)
+		return
+	}
+
+	if eventSvc != nil {
+		eventSvc.RecordEvent(domain.NewSystemEvent(
+			domain.EventFailure,
+			domain.SeverityCritical,
+			fmt.Sprintf("Poll failed for %s: %v", inst.ID, pollErr),
+			map[string]string{"instance_id": inst.ID, "host": inst.IP},
+		))
+	}
+
+	failures++
+	inst.Meta["failures"] = fmt.Sprintf("%d", failures)
+	inst.Meta["excluded_from_avg"] = "true"
+
+	if failures >= opts.MaxFailures {
+		log.Printf("scheduler: instance %s declared dead after %d consecutive failures", inst.ID, failures)
+		if eventSvc != nil {
+			eventSvc.RecordEvent(domain.NewSystemEvent(
+				domain.EventInstanceMarkedInactive,
+				domain.SeverityWarning,
+				fmt.Sprintf("Instance %s declared dead after consecutive failures", inst.ID),
+				map[string]string{"instance_id": inst.ID, "failures": inst.Meta["failures"]},
+			))
+		}
+		if opts.OnDeadInstance != nil {
+			dead := *inst
+			if err := opts.OnDeadInstance(ctx, &dead); err != nil {
+				log.Printf("scheduler: dead instance handler failed for %s: %v", inst.ID, err)
+			}
+		}
+		return
+	}
+
+	_ = svc.RegisterInstance(inst)
 }

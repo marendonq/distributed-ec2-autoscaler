@@ -19,6 +19,7 @@ service MonitorCService {
   // HU-02: Verificación de vivacidad (Ping)
   rpc Ping (PingRequest) returns (PingResponse) {}
   rpc GetMetrics (GetMetricsRequest) returns (GetMetricsResponse) {}
+  rpc Shutdown (ShutdownRequest) returns (ShutdownResponse) {}
 }
 
 message RegisterRequest {
@@ -56,6 +57,14 @@ message GetMetricsResponse {
   bool success = 1;
   float cpu_load = 2;     // Porcentaje 0.0-100.0
   int64 timestamp = 3;
+  string instance_id = 4;
+}
+
+message ShutdownRequest {}
+
+message ShutdownResponse {
+  bool success = 1;
+  string instance_id = 2;
 }
 
 // === HU-15: Métricas Consolidadas ===

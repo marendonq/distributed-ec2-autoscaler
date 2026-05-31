@@ -7,6 +7,18 @@
   "monitor_c_port": 50052,
   "heartbeat_check_interval_seconds": 10,
   "heartbeat_timeout_seconds": 30,
+  "grpc_timeout_seconds": 3,
+  "scale_up_threshold": 70,
+  "scale_down_threshold": 30,
+  "evaluation_window": 3,
+  "cooldown_seconds": 180,
+  "load_simulation": {
+    "min": 10,
+    "max": 90,
+    "period_seconds": 120,
+    "noise_amplitude": 5,
+    "update_interval_seconds": 5
+  },
   "ec2_params": {
     "ami": "<REPLACE_WITH_AMI_ID>",
     "instance_type": "t2.micro",
@@ -18,8 +30,5 @@
       "Project": "ASG-Project2"
     }
   },
-
   "policies": []
 }
-
-

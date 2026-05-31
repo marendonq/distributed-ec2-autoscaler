@@ -17,7 +17,7 @@ Asignado a la instancia donde corren MonitorS y ControllerASG (subnet pública).
 | Tipo | Protocolo | Puerto | Fuente | Propósito |
 |------|-----------|--------|--------|-----------|
 | SSH | TCP | 22 | `<TU_IP_PUBLICA>/32` | Acceso administrativo por SSH |
-| Custom TCP | TCP | 50052 | `172.20.2.0/24` | gRPC Register/Deregister desde MonitorC |
+| Custom TCP | TCP | 50051 | `172.20.2.0/24` | gRPC Register/Deregister desde MonitorC |
 
 **Outbound:** todo permitido (default). Necesario para que el ControllerASG se comunique con el SDK de AWS por HTTPS y para que el MonitorS haga polling a las AppInstances.
 
@@ -30,7 +30,7 @@ Asignado a cada instancia creada por el ControllerASG (subnet privada).
 | Tipo | Protocolo | Puerto | Fuente | Propósito |
 |------|-----------|--------|--------|-----------|
 | SSH | TCP | 22 | SG-Control | Debug vía bastion host |
-| Custom TCP | TCP | 50051 | SG-Control | gRPC Ping/GetMetrics/Shutdown desde MonitorS |
+| Custom TCP | TCP | 50052 | SG-Control | gRPC Ping/GetMetrics/Shutdown desde MonitorS |
 
 **Outbound:** todo permitido (default). En la práctica las AppInstances no generan tráfico saliente porque no tienen acceso a Internet (subnet privada sin NAT Gateway).
 

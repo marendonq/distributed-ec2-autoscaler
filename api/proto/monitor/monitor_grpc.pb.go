@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v7.34.1
-// source: api/proto/monitor/monitor.proto
+// source: monitor.proto
 
 package monitor
 
@@ -239,12 +239,13 @@ var MonitorSService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/proto/monitor/monitor.proto",
+	Metadata: "monitor.proto",
 }
 
 const (
 	MonitorCService_Ping_FullMethodName       = "/monitor.MonitorCService/Ping"
 	MonitorCService_GetMetrics_FullMethodName = "/monitor.MonitorCService/GetMetrics"
+	MonitorCService_Shutdown_FullMethodName   = "/monitor.MonitorCService/Shutdown"
 )
 
 // MonitorCServiceClient is the client API for MonitorCService service.
@@ -256,6 +257,7 @@ type MonitorCServiceClient interface {
 	// HU-02: Verificación de vivacidad (Ping)
 	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
 	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error)
+	Shutdown(ctx context.Context, in *ShutdownRequest, opts ...grpc.CallOption) (*ShutdownResponse, error)
 }
 
 type monitorCServiceClient struct {
@@ -286,6 +288,16 @@ func (c *monitorCServiceClient) GetMetrics(ctx context.Context, in *GetMetricsRe
 	return out, nil
 }
 
+func (c *monitorCServiceClient) Shutdown(ctx context.Context, in *ShutdownRequest, opts ...grpc.CallOption) (*ShutdownResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ShutdownResponse)
+	err := c.cc.Invoke(ctx, MonitorCService_Shutdown_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MonitorCServiceServer is the server API for MonitorCService service.
 // All implementations must embed UnimplementedMonitorCServiceServer
 // for forward compatibility.
@@ -295,6 +307,7 @@ type MonitorCServiceServer interface {
 	// HU-02: Verificación de vivacidad (Ping)
 	Ping(context.Context, *PingRequest) (*PingResponse, error)
 	GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error)
+	Shutdown(context.Context, *ShutdownRequest) (*ShutdownResponse, error)
 	mustEmbedUnimplementedMonitorCServiceServer()
 }
 
@@ -310,6 +323,9 @@ func (UnimplementedMonitorCServiceServer) Ping(context.Context, *PingRequest) (*
 }
 func (UnimplementedMonitorCServiceServer) GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMetrics not implemented")
+}
+func (UnimplementedMonitorCServiceServer) Shutdown(context.Context, *ShutdownRequest) (*ShutdownResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Shutdown not implemented")
 }
 func (UnimplementedMonitorCServiceServer) mustEmbedUnimplementedMonitorCServiceServer() {}
 func (UnimplementedMonitorCServiceServer) testEmbeddedByValue()                         {}
@@ -368,6 +384,24 @@ func _MonitorCService_GetMetrics_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MonitorCService_Shutdown_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShutdownRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MonitorCServiceServer).Shutdown(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MonitorCService_Shutdown_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MonitorCServiceServer).Shutdown(ctx, req.(*ShutdownRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MonitorCService_ServiceDesc is the grpc.ServiceDesc for MonitorCService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -383,7 +417,11 @@ var MonitorCService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetMetrics",
 			Handler:    _MonitorCService_GetMetrics_Handler,
 		},
+		{
+			MethodName: "Shutdown",
+			Handler:    _MonitorCService_Shutdown_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/proto/monitor/monitor.proto",
+	Metadata: "monitor.proto",
 }
