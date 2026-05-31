@@ -3,6 +3,7 @@ package main
 import (
     "context"
     "log"
+    "net/http"
     "os/signal"
     "syscall"
     "time"
@@ -12,6 +13,7 @@ import (
     persistence "github.com/marendonq/distributed-ec2-autoscaler/internal/adapters/persistence"
     "github.com/marendonq/distributed-ec2-autoscaler/internal/service"
     "github.com/marendonq/distributed-ec2-autoscaler/internal/ports"
+    httpAdapter "github.com/marendonq/distributed-ec2-autoscaler/internal/adapters/http"
     "github.com/marendonq/distributed-ec2-autoscaler/internal/controller"
 )
 
@@ -51,6 +53,13 @@ func main() {
     eventSvc := service.NewEventService(eventStore) // eventStore puede ser nil, hay nil-guard
 
     svc := service.NewMonitorService(reg, eventSvc)
+
+    // HU-29: inicializar servidor HTTP para consulta de eventos
+    go func() {
+        if err := httpAdapter.StartHTTPServerWithEventService(ctx, svc, eventSvc, ":8080"); err != nil && err != http.ErrServerClosed {
+            log.Printf("[HU-29] HTTP server error: %v", err)
+        }
+    }()
 
     // Start schedulers (pass service to allow marking inactive)
     monitor.StartSchedulers(ctx, cfg, svc, eventSvc)

@@ -46,8 +46,10 @@ func (s *monitorSServer) Register(ctx context.Context, req *pb.RegisterRequest) 
 
     // HU-11: registrar evento cuando un MonitorC se conecta
     if s.eventSvc != nil {
+        // HU-29: clasificar severidad del evento
         s.eventSvc.RecordEvent(domain.NewSystemEvent(
             domain.EventMonitorCRegistered,
+            domain.SeverityInfo,
             fmt.Sprintf("MonitorC %s registered from IP %s", req.InstanceId, req.LocalIp),
             map[string]string{"instance_id": req.InstanceId, "hostname": req.Hostname},
         ))
@@ -64,8 +66,10 @@ func (s *monitorSServer) Deregister(ctx context.Context, req *pb.DeregisterReque
 
     // HU-11: registrar evento cuando una instancia se desregistra
     if s.eventSvc != nil {
+        // HU-29: clasificar severidad del evento
         s.eventSvc.RecordEvent(domain.NewSystemEvent(
             domain.EventInstanceDeleted,
+            domain.SeverityInfo,
             fmt.Sprintf("Instance %s deregistered", req.InstanceId),
             map[string]string{"instance_id": req.InstanceId},
         ))
@@ -123,8 +127,10 @@ func (s *monitorSServer) GetAggregatedMetrics(ctx context.Context, req *pb.Aggre
 
     // HU-11: registrar metricas consolidadas como evento relevante
     if s.eventSvc != nil && activeCount > 0 {
+        // HU-29: clasificar severidad del evento
         s.eventSvc.RecordEvent(domain.NewSystemEvent(
             domain.EventMetricsRecorded,
+            domain.SeverityInfo,
             fmt.Sprintf("Aggregated metrics: avg_cpu=%.1f%%, active=%d, inactive=%d, total=%d",
                 avgLoad, activeCount, inactiveCount, len(instances)),
             map[string]string{
@@ -148,11 +154,15 @@ func (s *monitorSServer) GetAggregatedMetrics(ctx context.Context, req *pb.Aggre
 
 func (s *monitorSServer) GetEvents(ctx context.Context, req *pb.GetEventsRequest) (*pb.GetEventsResponse, error) {
     filter := make(map[string]string)
-    if req.EventType != nil && *req.EventType != "" {
-        filter["type"] = *req.EventType
+    if req.EventType != "" {
+        filter["type"] = req.EventType
     }
-    if req.AfterTimestamp != nil && *req.AfterTimestamp > 0 {
-        filter["after_timestamp"] = fmt.Sprintf("%d", *req.AfterTimestamp)
+    // HU-29: soportar filtro por severity en gRPC
+    if req.Severity != "" {
+        filter["severity"] = req.Severity
+    }
+    if req.AfterTimestamp > 0 {
+        filter["after_timestamp"] = fmt.Sprintf("%d", req.AfterTimestamp)
     }
 
     events, err := s.svc.GetEvents(filter)
@@ -161,8 +171,8 @@ func (s *monitorSServer) GetEvents(ctx context.Context, req *pb.GetEventsRequest
     }
 
     limit := 0
-    if req.Limit != nil {
-        limit = int(*req.Limit)
+    if req.Limit > 0 {
+        limit = int(req.Limit)
     }
     if limit > 0 && len(events) > limit {
         events = events[:limit]
@@ -173,6 +183,7 @@ func (s *monitorSServer) GetEvents(ctx context.Context, req *pb.GetEventsRequest
         pbEvents = append(pbEvents, &pb.SystemEvent{
             Id:        e.ID,
             Type:      string(e.Type),
+            Severity:  string(e.Severity),
             Message:   e.Message,
             Metadata:  e.Metadata,
             Timestamp: e.Timestamp,
@@ -290,8 +301,10 @@ func pollInstance(inst *domain.Instance, svc interface{ RegisterInstance(*domain
     } else {
         // HU-11: registrar fallo de conexion al hacer poll
         if eventSvc != nil {
+            // HU-29: clasificar severidad del evento
             eventSvc.RecordEvent(domain.NewSystemEvent(
                 domain.EventFailure,
+                domain.SeverityCritical,
                 fmt.Sprintf("Poll failed for %s: %v", inst.ID, err),
                 map[string]string{"instance_id": inst.ID, "host": inst.IP},
             ))
@@ -304,8 +317,10 @@ func pollInstance(inst *domain.Instance, svc interface{ RegisterInstance(*domain
             svc.MarkInactive(inst.ID)
             // HU-11: registrar cuando el scheduler marca una instancia inactiva
             if eventSvc != nil {
+                // HU-29: clasificar severidad del evento
                 eventSvc.RecordEvent(domain.NewSystemEvent(
                     domain.EventInstanceMarkedInactive,
+                    domain.SeverityWarning,
                     fmt.Sprintf("Instance %s marked inactive after consecutive failures", inst.ID),
                     map[string]string{"instance_id": inst.ID, "failures": inst.Meta["failures"]},
                 ))

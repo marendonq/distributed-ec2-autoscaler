@@ -22,7 +22,7 @@ const (
 	MonitorSService_Register_FullMethodName             = "/monitor.MonitorSService/Register"
 	MonitorSService_Deregister_FullMethodName           = "/monitor.MonitorSService/Deregister"
 	MonitorSService_GetAggregatedMetrics_FullMethodName = "/monitor.MonitorSService/GetAggregatedMetrics"
-	MonitorSService_GetEvents_FullMethodName           = "/monitor.MonitorSService/GetEvents"
+	MonitorSService_GetEvents_FullMethodName            = "/monitor.MonitorSService/GetEvents"
 )
 
 // MonitorSServiceClient is the client API for MonitorSService service.

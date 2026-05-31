@@ -37,7 +37,12 @@ func (s *SQLiteEventStore) ensureSchema() error {
         metadata  TEXT,
         timestamp BIGINT NOT NULL
     )`)
-    return err
+    if err != nil {
+        return err
+    }
+    // HU-29: agregar columna severity si no existe (migracion segura)
+    _, _ = s.db.Exec(`ALTER TABLE events ADD COLUMN severity TEXT NOT NULL DEFAULT 'INFO'`)
+    return nil
 }
 
 func (s *SQLiteEventStore) Log(event *domain.SystemEvent) error {
@@ -47,6 +52,9 @@ func (s *SQLiteEventStore) Log(event *domain.SystemEvent) error {
     if event.Timestamp == 0 {
         event.Timestamp = time.Now().Unix()
     }
+    if event.Severity == "" {
+        event.Severity = domain.SeverityInfo
+    }
     meta := []byte("null")
     if event.Metadata != nil {
         b, err := json.Marshal(event.Metadata)
@@ -54,19 +62,24 @@ func (s *SQLiteEventStore) Log(event *domain.SystemEvent) error {
         meta = b
     }
     _, err := s.db.Exec(
-        `INSERT INTO events (id, type, message, metadata, timestamp) VALUES (?,?,?,?,?)`,
-        event.ID, string(event.Type), event.Message, string(meta), event.Timestamp,
+        `INSERT INTO events (id, type, severity, message, metadata, timestamp) VALUES (?,?,?,?,?,?)`,
+        event.ID, string(event.Type), string(event.Severity), event.Message, string(meta), event.Timestamp,
     )
     return err
 }
 
 func (s *SQLiteEventStore) List(filter map[string]string) ([]*domain.SystemEvent, error) {
-    q := `SELECT id, type, message, metadata, timestamp FROM events`
+    q := `SELECT id, type, severity, message, metadata, timestamp FROM events`
     var args []interface{}
     var where []string
     if t, ok := filter["type"]; ok {
         where = append(where, "type = ?")
         args = append(args, t)
+    }
+    if sev, ok := filter["severity"]; ok {
+        // HU-29: filtrar por nivel de severidad
+        where = append(where, "severity = ?")
+        args = append(args, sev)
     }
     if after, ok := filter["after_timestamp"]; ok {
         where = append(where, "timestamp > ?")
@@ -85,7 +98,7 @@ func (s *SQLiteEventStore) List(filter map[string]string) ([]*domain.SystemEvent
     for rows.Next() {
         var e domain.SystemEvent
         var metaStr string
-        if err := rows.Scan(&e.ID, &e.Type, &e.Message, &metaStr, &e.Timestamp); err != nil {
+        if err := rows.Scan(&e.ID, &e.Type, &e.Severity, &e.Message, &metaStr, &e.Timestamp); err != nil {
             return nil, err
         }
         if metaStr != "" && metaStr != "null" {

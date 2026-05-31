@@ -84,8 +84,10 @@ func (c *ASGController) reconcile(ctx context.Context) {
         remaining := c.cooldown - time.Since(c.lastScaleAction)
         log.Printf("Cooldown active, %v remaining. Skipping.", remaining)
         if c.eventSvc != nil {
+            // HU-29: clasificar severidad del evento
             c.eventSvc.RecordEvent(domain.NewSystemEvent(
                 domain.EventASGCooldownActive,
+                domain.SeverityWarning,
                 fmt.Sprintf("ASG cooldown active, %v remaining", remaining),
                 nil,
             ))
@@ -183,8 +185,10 @@ func (c *ASGController) scaleUp(ctx context.Context) {
     instanceID := "i-placeholder-up"
     // HU-11: registrar creacion de instancia en AWS
     if c.eventSvc != nil {
+        // HU-29: clasificar severidad del evento
         c.eventSvc.RecordEvent(domain.NewSystemEvent(
             domain.EventInstanceCreated,
+            domain.SeverityInfo,
             fmt.Sprintf("Instance %s created (%s)", instanceID, c.cfg.EC2Params.InstanceType),
             map[string]string{"instance_id": instanceID, "instance_type": c.cfg.EC2Params.InstanceType},
         ))
@@ -196,8 +200,10 @@ func (c *ASGController) scaleDown(ctx context.Context, localInstances []*domain.
     instanceID := "i-placeholder-down"
     // HU-11: registrar terminacion de instancia en AWS
     if c.eventSvc != nil {
+        // HU-29: clasificar severidad del evento
         c.eventSvc.RecordEvent(domain.NewSystemEvent(
             domain.EventInstanceDeleted,
+            domain.SeverityInfo,
             fmt.Sprintf("Instance %s terminated", instanceID),
             map[string]string{"instance_id": instanceID},
         ))

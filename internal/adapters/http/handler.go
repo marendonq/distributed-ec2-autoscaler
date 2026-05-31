@@ -10,11 +10,21 @@ import (
 )
 
 type Handler struct {
-    svc *service.MonitorService
+    svc      *service.MonitorService
+    eventSvc *service.EventService
 }
 
 func NewHandler(svc *service.MonitorService) *Handler {
     return &Handler{svc: svc}
+}
+
+// HU-29: constructor para handler con solo eventSvc (usado por tests)
+func NewHandlerEventOnly(eventSvc *service.EventService) *Handler {
+    return &Handler{eventSvc: eventSvc}
+}
+
+func NewHandlerWithEventService(svc *service.MonitorService, eventSvc *service.EventService) *Handler {
+    return &Handler{svc: svc, eventSvc: eventSvc}
 }
 
 func (h *Handler) RegisterEndpoint(w http.ResponseWriter, r *http.Request) {
@@ -77,4 +87,57 @@ func (h *Handler) HeartbeatEndpoint(w http.ResponseWriter, r *http.Request) {
     }
     w.WriteHeader(http.StatusOK)
     _ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+// HU-29: GET /events — lista todos los eventos, acepta ?severity=CRITICAL&type=failure
+func (h *Handler) GetEvents(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodGet {
+        w.WriteHeader(http.StatusMethodNotAllowed)
+        return
+    }
+    if h.eventSvc == nil {
+        http.Error(w, "event service not configured", http.StatusInternalServerError)
+        return
+    }
+    filter := map[string]string{}
+    if sev := r.URL.Query().Get("severity"); sev != "" {
+        filter["severity"] = sev
+    }
+    if t := r.URL.Query().Get("type"); t != "" {
+        filter["type"] = t
+    }
+    events, err := h.eventSvc.GetEvents(filter)
+    if err != nil {
+        log.Printf("GetEvents error: %v", err)
+        http.Error(w, "internal error", http.StatusInternalServerError)
+        return
+    }
+    if events == nil {
+        events = []*domain.SystemEvent{}
+    }
+    w.Header().Set("Content-Type", "application/json")
+    _ = json.NewEncoder(w).Encode(events)
+}
+
+// HU-29: GET /events/critical — atajo para eventos CRITICAL unicamente
+func (h *Handler) GetCriticalEvents(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodGet {
+        w.WriteHeader(http.StatusMethodNotAllowed)
+        return
+    }
+    if h.eventSvc == nil {
+        http.Error(w, "event service not configured", http.StatusInternalServerError)
+        return
+    }
+    events, err := h.eventSvc.GetCriticalEvents()
+    if err != nil {
+        log.Printf("GetCriticalEvents error: %v", err)
+        http.Error(w, "internal error", http.StatusInternalServerError)
+        return
+    }
+    if events == nil {
+        events = []*domain.SystemEvent{}
+    }
+    w.Header().Set("Content-Type", "application/json")
+    _ = json.NewEncoder(w).Encode(events)
 }
