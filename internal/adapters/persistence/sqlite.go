@@ -5,6 +5,8 @@ import (
     "encoding/json"
     "errors"
     "fmt"
+    "strconv"
+    "sync"
     "time"
 
     _ "modernc.org/sqlite"
@@ -15,6 +17,7 @@ import (
 
 type SQLiteRegistry struct {
     db *sql.DB
+    mu sync.RWMutex
 }
 
 // NewSQLiteRegistry opens a sqlite connection with provided DSN (e.g.
@@ -135,4 +138,50 @@ func (r *SQLiteRegistry) Delete(id string) error {
         return fmt.Errorf("not found")
     }
     return nil
+}
+
+func (r *SQLiteRegistry) GetAggregatedMetrics() (float32, int, int, error) {
+    var totalLoad float32 = 0
+    activeCount := 0
+    inactiveCount := 0
+
+    r.mu.RLock()
+    defer r.mu.RUnlock()
+
+    q := `SELECT meta, status FROM instances`
+    rows, err := r.db.Query(q)
+    if err != nil {
+        return 0, 0, 0, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var metaStr, status string
+        if err := rows.Scan(&metaStr, &status); err != nil {
+            return 0, 0, 0, err
+        }
+
+        if status == string(domain.StatusActive) {
+            activeCount++
+            if metaStr != "" && metaStr != "null" {
+                var meta map[string]string
+                if err := json.Unmarshal([]byte(metaStr), &meta); err == nil {
+                    if loadStr, ok := meta["cpu_load"]; ok {
+                        if load, err := strconv.ParseFloat(loadStr, 32); err == nil {
+                            totalLoad += float32(load)
+                        }
+                    }
+                }
+            }
+        } else {
+            inactiveCount++
+        }
+    }
+
+    avgLoad := float32(0)
+    if activeCount > 0 {
+        avgLoad = totalLoad / float32(activeCount)
+    }
+
+    return avgLoad, activeCount, inactiveCount, nil
 }

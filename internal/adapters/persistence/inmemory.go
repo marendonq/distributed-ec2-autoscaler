@@ -2,6 +2,7 @@ package persistence
 
 import (
     "errors"
+    "strconv"
     "sync"
     "time"
 
@@ -81,4 +82,33 @@ func (r *InMemoryRegistry) Delete(id string) error {
     }
     delete(r.store, id)
     return nil
+}
+
+func (r *InMemoryRegistry) GetAggregatedMetrics() (float32, int, int, error) {
+    var totalLoad float32 = 0
+    activeCount := 0
+    inactiveCount := 0
+
+    r.mu.RLock()
+    defer r.mu.RUnlock()
+
+    for _, inst := range r.store {
+        if inst.Status == domain.StatusActive {
+            activeCount++
+            if loadStr, ok := inst.Meta["cpu_load"]; ok {
+                if load, err := strconv.ParseFloat(loadStr, 32); err == nil {
+                    totalLoad += float32(load)
+                }
+            }
+        } else {
+            inactiveCount++
+        }
+    }
+
+    avgLoad := float32(0)
+    if activeCount > 0 {
+        avgLoad = totalLoad / float32(activeCount)
+    }
+
+    return avgLoad, activeCount, inactiveCount, nil
 }

@@ -8,4 +8,5 @@ type InstanceRegistry interface {
     List() ([]*domain.Instance, error)
     MarkInactive(id string) error
     Delete(id string) error
+    GetAggregatedMetrics() (avgLoad float32, activeCount int, inactiveCount int, err error)
 }

@@ -4,7 +4,6 @@ import (
     "context"
     "fmt"
     "log"
-    "strconv"
     "time"
     "strings"
 
@@ -20,6 +19,7 @@ import (
 type Registry interface {
     List() ([]*domain.Instance, error)
     Delete(string) error
+    GetAggregatedMetrics() (float32, int, int, error)
 }
 
 type ASGController struct {
@@ -83,7 +83,6 @@ func (c *ASGController) reconcile(ctx context.Context) {
     if !c.lastScaleAction.IsZero() && time.Since(c.lastScaleAction) < c.cooldown {
         remaining := c.cooldown - time.Since(c.lastScaleAction)
         log.Printf("Cooldown active, %v remaining. Skipping.", remaining)
-        // HU-11: registrar que el cooldown bloqueo una accion de escalado
         if c.eventSvc != nil {
             c.eventSvc.RecordEvent(domain.NewSystemEvent(
                 domain.EventASGCooldownActive,
@@ -93,6 +92,15 @@ func (c *ASGController) reconcile(ctx context.Context) {
         }
         return
     }
+
+    // HU-20: Obtener métricas agregadas del registry
+    avgLoad, activeCount, inactiveCount, err := c.registry.GetAggregatedMetrics()
+    if err != nil {
+        log.Printf("ControllerASG error getting aggregated metrics: %v", err)
+        return
+    }
+
+    log.Printf("ControllerASG: avgLoad=%.1f%%, active=%d, inactive=%d", avgLoad, activeCount, inactiveCount)
 
     // 1. Validar instancias reales vs AWS (HU-22)
     awsInstances, err := c.getAWSInstances(ctx)
@@ -114,38 +122,32 @@ func (c *ASGController) reconcile(ctx context.Context) {
         awsMap[id] = true
     }
 
-    activeCount := 0
-    var totalLoad float32 = 0
-    var activeIDs []string
-
     for _, inst := range localInstances {
         // HU-22: Si la instancia local NO existe en AWS, eliminarla del registro
         if !awsMap[inst.ID] && inst.ID != "" && !strings.HasPrefix(inst.ID, "local-") {
-            log.Printf("HU-22 Validación: Instancia %s eliminada de AWS. Eliminando del registro local.", inst.ID)
+            log.Printf("ControllerASG Validación: Instancia %s eliminada de AWS. Eliminando del registro local.", inst.ID)
             c.registry.Delete(inst.ID)
             continue
         }
-
-        if inst.Status == domain.StatusActive {
-            activeCount++
-            activeIDs = append(activeIDs, inst.ID)
-            if loadStr, ok := inst.Meta["cpu_load"]; ok {
-                if load, err := strconv.ParseFloat(loadStr, 32); err == nil {
-                    totalLoad += float32(load)
-                }
-            }
-        }
     }
 
-    // Si AWS dice que hay instancias pero el registro local está vacío (ej: reinicio), 
-    // asumimos el activeCount basado en AWS hasta que se registren.
+    // HU-20: Si hay menos instancias activas que en AWS, esperar registro
     if activeCount < len(awsInstances) {
         log.Printf("ControllerASG: Detectadas %d instancias en AWS, pero solo %d activas localmente. Esperando registro...", len(awsInstances), activeCount)
         // No tomamos acciones si no todas se han reportado
         return
     }
 
-    // TODO: El cálculo de métricas y la decisión de ScaleUp / ScaleDown serán implementados aquí por otro miembro del equipo.
+    // HU-20: Scale up/down decisions basadas en avgLoad real
+    if avgLoad >= c.scaleUpThreshold && activeCount < c.maxInstances {
+        log.Printf("ControllerASG: Scale up triggered (avgLoad %.1f%% >= threshold %.1f%%)", avgLoad, c.scaleUpThreshold)
+        c.scaleUp(ctx)
+        c.lastScaleAction = time.Now()
+    } else if avgLoad <= c.scaleDownThreshold && activeCount > c.minInstances {
+        log.Printf("ControllerASG: Scale down triggered (avgLoad %.1f%% <= threshold %.1f%%)", avgLoad, c.scaleDownThreshold)
+        c.scaleDown(ctx, localInstances)
+        c.lastScaleAction = time.Now()
+    }
 }
 
 func (c *ASGController) getAWSInstances(ctx context.Context) ([]string, error) {
